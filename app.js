@@ -4,7 +4,8 @@ const dotenv = require('dotenv').config();
 require("./database/config").connect();
 const auth = require("./middleware/auth");
 const app = express();
-
+var cors = require('cors');
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Initialize DB
@@ -14,6 +15,8 @@ const CarStoreRoute = require('./Routes/Car_Store.route');
 app.use('/car/store', CarStoreRoute);
 const UserRoute = require('./Routes/User.route');
 app.use('/user', UserRoute);
+const AdminRoute = require('./Routes/Admin.route');
+app.use('/admin', auth, AdminRoute);
 
 app.post("/welcome", auth, (req, res) => {
   res.status(200).send("Welcome 🙌 ");

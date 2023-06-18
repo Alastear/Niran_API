@@ -6,6 +6,14 @@ const CarStoreSchema = new Schema({
     type: String,
     required: true
   },
+  brand_name : {
+    type: String,
+    required: true
+  },
+  model_name : {
+    type: String,
+    required: true
+  },
   cars_image_default: {
     type: String,
   },

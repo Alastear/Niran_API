@@ -69,7 +69,7 @@ module.exports = {
           { user_id: result._id },
           process.env.TOKEN_KEY,
           {
-            expiresIn: "2h",
+            expiresIn: "24h",
           }
         );
         // save user token
