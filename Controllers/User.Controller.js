@@ -7,7 +7,7 @@ const User = require('../Models/User.model');
 module.exports = {
 
 
-  createNewUser: async (req, res, next) => {
+  user_register: async (req, res, next) => {
     try {
       const params = req.body;
       const finduser = await User.findOne({ username: params.username, });
@@ -24,7 +24,7 @@ module.exports = {
         );
         const result = await user.save();
         const token = jwt.sign(
-          { user_id: result._id },
+          { user_id: result._id, user_name: result.username },
           process.env.TOKEN_KEY,
           {
             expiresIn: "2h",
@@ -47,38 +47,71 @@ module.exports = {
     }
   },
 
-  getAllUser: async (req, res, next) => {
+  get_all_user: async (req, res, next) => {
     try {
-      const results = await User.find({}, { __v: 0 });
+      const results = await User.find({}, { __v: 0 }).select("-password");
       res.send(results);
     } catch (error) {
       console.log(error.message);
     }
   },
 
-  loginUser: async (req, res, next) => {
+  user_login: async (req, res, next) => {
     const params = req.body;
-    encryptedPassword = await bcrypt.hash(params.password, 10);
     try {
 
       const result = await User.findOne({ username: params.username });
 
       if (result && (await bcrypt.compare(params.password, result.password))) {
 
-        const token = jwt.sign(
-          { user_id: result._id },
+        const access_token = jwt.sign(
+          { user_id: result._id, user_name: result.username },
           process.env.TOKEN_KEY,
+          {
+            expiresIn: "4h",
+          }
+        );
+
+        const refresh_token = jwt.sign(
+          { user_id: result._id, user_name: result.username },
+          process.env.REFRESH_TOKEN_KEY,
           {
             expiresIn: "24h",
           }
         );
         // save user token
-        result.token = token;
-        res.send({ result, token });
+        result.access_token = access_token;
+        result.refresh_token = refresh_token;
+        res.send({ result, access_token, refresh_token });
       } else {
         return;
       }
 
+    } catch (error) {
+      console.log(error.message);
+      if (error instanceof mongoose.CastError) {
+        next(createError(400, 'Invalid Product id'));
+        return;
+      }
+      next(error);
+    }
+  },
+
+  update_user: async (req, res, next) => {
+    try {
+      console.log(req.user);
+      const date = Date.now();
+      const updates = req.body;
+      updates.updateDate = date;
+      const options = { new: true };
+      if (updates.password) {
+        updates.password = await bcrypt.hash(updates.password, 10);
+      }
+      const result = await User.findByIdAndUpdate(req.user.user_id, updates, options);
+      if (!result) {
+        throw createError(404, 'Product does not exist');
+      }
+      res.send(result)
     } catch (error) {
       console.log(error.message);
       if (error instanceof mongoose.CastError) {

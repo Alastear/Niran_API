@@ -10,6 +10,9 @@ const verifyToken = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.TOKEN_KEY);
         req.user = decoded;
+        if (req.user.user_name !== 'admin1') {
+            return res.status(401).send("Invalid Admin Only");
+        }
     } catch (err) {
         return res.status(401).send("Invalid Token");
     }

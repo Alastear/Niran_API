@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, DeleteObjectsCommand } = require("@aws-sdk/client-s3");
 const createError = require('http-errors');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
@@ -21,27 +21,14 @@ const s3 = new S3Client({
 
 module.exports = {
 
-  testData: async (req, res, next) => {
-    try {
-      res.send({
-        data: Date.now()
-      })
-    } catch (error) {
-      res.send({
-        data: "asdasdas"
-      })
-      console.log(error.message);
-    }
-  },
-
-  createNewCar: async (req, res, next) => {
+  create_car_store: async (req, res, next) => {
     try {
       const date = new Date();
       const randomImageName = crypto.randomBytes(32).toString('hex');
       const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
       const params = {
         Bucket: bucket_name,
-        Key: randomImageName,
+        Key: `Category/Default/${randomImageName}`,
         Body: buffer,
         ContentType: req.file.mimetype,
       };
@@ -64,19 +51,6 @@ module.exports = {
       await s3.send(command);
       const carStore = await CarStore(body);
       const result = await carStore.save();
-      const folderName = result._id;
-      const rootFolder = "Category"
-      const folderPath = `${rootFolder}/${folderName}`;
-      if (fs.existsSync(rootFolder)) {
-        if (!fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath);
-        }
-      } else {
-        fs.mkdirSync(folderPath);
-        if (!fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath);
-        }
-      }
       res.send(result);
     } catch (error) {
       console.log(error.message);
@@ -88,19 +62,45 @@ module.exports = {
     }
   },
 
+  get_all_car_store: async (req, res, next) => {
+    try {
+      const results = await CarStore.find({}, { __v: 0 });
+      res.send(results);
+    } catch (error) {
+      console.log(error.message);
+    }
+  },
 
-
-  updateCar: async (req, res, next) => {
+  update_car_store: async (req, res, next) => {
     try {
       const id = req.params.id;
-      const updates = req.body;
+      const updates = req.body ?? {};
+      const date = new Date();
+      updates.updateDate = date;
       const options = { new: true };
-      console.log(updates, id);
-      // const result = await CarStore.findByIdAndUpdate(id, updates, options);
-      // if (!result) {
-      //   throw createError(404, 'Product does not exist');
-      // }
-      res.send({});
+      if (req.file) {
+        const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
+        const params = {
+          Bucket: bucket_name,
+          Key: updates.cars_image_default,
+          Body: buffer,
+          ContentType: req.file.mimetype,
+        };
+        const command = new PutObjectCommand(params);
+        await s3.send(command);
+
+        const result = await CarStore.findByIdAndUpdate(id, updates, options);
+        if (!result) {
+          throw createError(404, 'Product does not exist');
+        }
+        res.send(result)
+      } else {
+        const result = await CarStore.findByIdAndUpdate(id, updates, options);
+        if (!result) {
+          throw createError(404, 'Product does not exist');
+        }
+        res.send(result)
+      }
     } catch (error) {
       console.log(error.message);
       if (error instanceof mongoose.CastError) {
@@ -111,26 +111,30 @@ module.exports = {
     }
   },
 
-  updateCarImage: async (req, res, next) => {
+  update_car_store_image_gallery: async (req, res, next) => {
     try {
+      const imagelist = req.files
       const id = req.params.id;
+      const body = req.body;
+      body.cars_image = JSON.parse(body.cars_image);
       const date = new Date();
-      const randomImageName = crypto.randomBytes(32).toString('hex');
-      const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
-      const params = {
-        Bucket: bucket_name,
-        Key: `Category/${id}/${randomImageName}`,
-        Body: buffer,
-        ContentType: req.file.mimetype,
-      };
+      for (let index = 0; index < imagelist.length; index++) {
+        console.log(imagelist[index]);
+        const randomImageName = crypto.randomBytes(32).toString('hex');
+        const buffer = await sharp(imagelist[index].buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
+        const params = {
+          Bucket: bucket_name,
+          Key: `Category/${id}/${randomImageName}`,
+          Body: buffer,
+          ContentType: imagelist[index].mimetype,
+        };
+        body.cars_image.push(`${randomImageName}`)
+        console.log(body);
+        const command = new PutObjectCommand(params);
+        const setImage = await s3.send(command).then(() => { })
 
-      const body = {
-        cars_image: [
-          `Category/${id}/${randomImageName}`,
-        ]
       }
-      const command = new PutObjectCommand(params);
-      const setImage = await s3.send(command).then(() => { })
+
       const options = { new: true };
       const result = await CarStore.findByIdAndUpdate(id, body, options);
       if (!result) {
@@ -147,32 +151,33 @@ module.exports = {
     }
   },
 
-  getAllProducts: async (req, res, next) => {
+  delete_car_store_image_gallery: async (req, res, next) => {
     try {
-      const results = await CarStore.find({}, { __v: 0 });
-      res.send(results);
-    } catch (error) {
-      console.log(error.message);
-    }
-  },
+      const body = req.body;
+      const id = req.params.id;
+      const date = new Date();
+      body.updateDate = date;
+      const options = { new: true };
+      const filePathNames = []
+      console.log(body);
+      body.cars_image_delete.forEach(element => {
+        filePathNames.push(`Category/${id}/${element}`)
+      });
 
-  deleteCar: async (req, res, next) => {
-    const id = req.params.id;
-    try {
-      const result = await CarStore.findByIdAndDelete(id);
-      // console.log(result);
-      if (!result) {
-        throw createError(404, 'Product does not exist.');
-      }
-      if (result.cars_image_default) {
-        const paramsDeleteImage = {
-          Bucket: bucket_name,
-          Key: result.cars_image_default,
+      const paramsDeleteImage = {
+        Bucket: bucket_name,
+        Delete: {
+          Objects: filePathNames.map((key) => ({ Key: key }))
         }
-        const command = new DeleteObjectCommand(paramsDeleteImage);
-        await s3.send(command);
       }
-      res.send(result);
+      delete body["cars_image_delete"];
+      // console.log(paramsDeleteImage);
+      const command = new DeleteObjectsCommand(paramsDeleteImage);
+      await s3.send(command);
+
+      const result = await CarStore.findByIdAndUpdate(id, body, options);
+      console.log(result);
+      res.send(result)
     } catch (error) {
       console.log(error.message);
       if (error instanceof mongoose.CastError) {
@@ -181,6 +186,51 @@ module.exports = {
       }
       next(error);
     }
-  }
+  },
+
+  delete_car_store: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await CarStore.findByIdAndDelete(id);
+      console.log(result);
+      if (!result) {
+        throw createError(404, 'Product does not exist.');
+      }
+      if (result.cars_image.length) {
+        const filePathNames = [`Category/Default/${result.cars_image_default}`]
+        result.cars_image.forEach(element => {
+          filePathNames.push(`Category/${id}/${element}`)
+        });
+
+        const paramsDeleteImage = {
+          Bucket: bucket_name,
+          Delete: {
+            Objects: filePathNames.map((key) => ({ Key: key }))
+          }
+        }
+        const command = new DeleteObjectsCommand(paramsDeleteImage);
+        await s3.send(command);
+
+        res.send(result);
+      } else {
+        const paramsDeleteImage = {
+          Bucket: bucket_name,
+          Key: `Category/Default/${result.cars_image_default}`
+        }
+        const command = new DeleteObjectCommand(paramsDeleteImage);
+        await s3.send(command);
+
+        res.send(result);
+      }
+
+    } catch (error) {
+      console.log(error.message);
+      if (error instanceof mongoose.CastError) {
+        next(createError(400, 'Invalid Product id'));
+        return;
+      }
+      next(error);
+    }
+  },
 
 };

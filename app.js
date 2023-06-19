@@ -3,6 +3,7 @@ const createError = require('http-errors');
 const dotenv = require('dotenv').config();
 require("./database/config").connect();
 const auth = require("./middleware/auth");
+const authAdmin = require("./middleware/authAdmin");
 const app = express();
 var cors = require('cors');
 app.use(cors());
@@ -16,7 +17,7 @@ app.use('/car/store', CarStoreRoute);
 const UserRoute = require('./Routes/User.route');
 app.use('/user', UserRoute);
 const AdminRoute = require('./Routes/Admin.route');
-app.use('/admin', auth, AdminRoute);
+app.use('/admin', authAdmin, AdminRoute);
 
 app.post("/welcome", auth, (req, res) => {
   res.status(200).send("Welcome 🙌 ");
