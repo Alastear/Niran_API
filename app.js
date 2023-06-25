@@ -11,13 +11,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Initialize DB
 // require('./initDB')();
+app.use('/api',authAdmin)
 
 const CarStoreRoute = require('./Routes/Car_Store.route');
 app.use('/car/store', CarStoreRoute);
 const UserRoute = require('./Routes/User.route');
 app.use('/user', UserRoute);
 const AdminRoute = require('./Routes/Admin.route');
-app.use('/admin', authAdmin, AdminRoute);
+app.use('/api/admin', AdminRoute);
 
 app.post("/welcome", auth, (req, res) => {
   res.status(200).send("Welcome 🙌 ");
