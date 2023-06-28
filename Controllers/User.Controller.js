@@ -9,32 +9,24 @@ module.exports = {
 
   user_register: async (req, res, next) => {
     try {
-      const params = req.body;
-      const finduser = await User.findOne({ username: params.username, });
+      const body = req.body;
+      const finduser = await User.findOne({ username: body.username, });
       if (!finduser) {
-        encryptedPassword = await bcrypt.hash(params.password, 10);
+        encryptedPassword = await bcrypt.hash(body.password, 10);
         const date = Date.now();
         const user = new User(
           {
-            username: params.username,
+            username: body.username,
             password: encryptedPassword,
+            position: body.position,
             createDate: date,
             updateDate: date,
           }
         );
         const result = await user.save();
-        const token = jwt.sign(
-          { user_id: result._id, user_name: result.username },
-          process.env.TOKEN_KEY,
-          {
-            expiresIn: "2h",
-          }
-        );
-        // save user token
-        result.token = token;
-        res.send({ result, token });
+        res.send(result);
       } else {
-        res.send({ error: "Invalid User" })
+        res.send({ error: "Invalid User Data" })
       }
 
     } catch (error) {
@@ -61,25 +53,24 @@ module.exports = {
     try {
 
       const result = await User.findOne({ username: params.username });
-
+      console.log(result);
       if (result && (await bcrypt.compare(params.password, result.password))) {
 
         const access_token = jwt.sign(
-          { user_id: result._id, user_name: result.username },
+          { user_id: result._id, user_name: result.username, user_position: result.position },
           process.env.TOKEN_KEY,
           {
-            expiresIn: "4h",
+            expiresIn: "365d",
           }
         );
 
         const refresh_token = jwt.sign(
-          { user_id: result._id, user_name: result.username },
+          { user_id: result._id },
           process.env.REFRESH_TOKEN_KEY,
           {
-            expiresIn: "24h",
+            expiresIn: "365d",
           }
         );
-        // save user token
         result.access_token = access_token;
         result.refresh_token = refresh_token;
         res.send({ result, access_token, refresh_token });
@@ -100,26 +91,53 @@ module.exports = {
   update_user: async (req, res, next) => {
     try {
       console.log(req.user);
+      const id = req.params.id
       const date = Date.now();
       const updates = req.body;
       updates.updateDate = date;
       const options = { new: true };
-      if (updates.password) {
-        updates.password = await bcrypt.hash(updates.password, 10);
+
+      const finduser = await User.findOne({ username: updates.username });
+      if (!finduser) {
+        if (updates.password) {
+          updates.password = await bcrypt.hash(updates.password, 10);
+        }
+        const result = await User.findByIdAndUpdate(id, updates, options);
+        if (!result) {
+          throw createError(404, 'User does not exist');
+        }
+        res.send(result)
+      } else {
+        throw createError(404, "This username can't be used");
       }
-      const result = await User.findByIdAndUpdate(req.user.user_id, updates, options);
-      if (!result) {
-        throw createError(404, 'Product does not exist');
-      }
-      res.send(result)
+
     } catch (error) {
       console.log(error.message);
       if (error instanceof mongoose.CastError) {
-        next(createError(400, 'Invalid Product id'));
+        next(createError(400, 'Invalid User id'));
         return;
       }
       next(error);
     }
   },
+
+  delete_user: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const result = await User.findByIdAndDelete(id);
+      // console.log(result);
+      if (!result) {
+        throw createError(404, 'User does not exist.');
+      }
+      res.send(result);
+    } catch (error) {
+      console.log(error.message);
+      if (error instanceof mongoose.CastError) {
+        next(createError(400, 'Invalid User id'));
+        return;
+      }
+      next(error);
+    }
+  }
 
 };

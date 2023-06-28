@@ -64,7 +64,14 @@ module.exports = {
 
   get_all_car_store: async (req, res, next) => {
     try {
-      const results = await CarStore.find({}, { __v: 0 });
+      let query = req.query
+      console.log(query);
+      const results = await CarStore.find({}, { __v: 0 })
+        .limit(Number(query.size) ?? null)
+        .skip(Number(query.page) * Number(query.size) ?? null)
+        .sort({
+          updateDate: '-1'
+        });
       res.send(results);
     } catch (error) {
       console.log(error.message);

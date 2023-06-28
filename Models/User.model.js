@@ -16,6 +16,10 @@ const UserSchema = new Schema({
   tel: {
     type: String,
   },
+  position: {
+    type: String,
+    required: true
+  },
   createDate: {
     type: Date,
     required: true
