@@ -64,14 +64,19 @@ module.exports = {
 
   get_all_car_store: async (req, res, next) => {
     try {
-      let query = req.query
+      let query = req.query;
+      let sortData = {}
+      if (query.updateDate) {
+        sortData.updateDate = '-1';
+      }
+      if (query.createDate) {
+        sortData.createDate = '-1';
+      }
       console.log(query);
       const results = await CarStore.find({}, { __v: 0 })
         .limit(Number(query.size) ?? null)
         .skip(Number(query.page) * Number(query.size) ?? null)
-        .sort({
-          updateDate: '-1'
-        });
+        .sort(sortData);
       res.send(results);
     } catch (error) {
       console.log(error.message);
@@ -136,7 +141,7 @@ module.exports = {
           ContentType: imagelist[index].mimetype,
         };
         body.cars_image.push(`${randomImageName}`)
-        console.log(body);
+        body.updateDate = date;
         const command = new PutObjectCommand(params);
         const setImage = await s3.send(command).then(() => { })
 
