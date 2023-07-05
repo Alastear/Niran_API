@@ -6,6 +6,10 @@ const CarDataDetailSchema = new Schema({
     type: String,
     required: true
   },
+  cardt_type: {
+    type: String,
+    required: true
+  },
   cardt_description: {
     type: String,
   },

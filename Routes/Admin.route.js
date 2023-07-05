@@ -24,7 +24,12 @@ router.get('/delete/model/:id', MasterDataController.Model_Api.delete_model)
 // manage master data brand
 router.post('/create/brand', MasterDataController.Brand_Api.create_brand)
 router.post('/update/brand/:id', MasterDataController.Brand_Api.update_brand)
-router.post('/delete/brand/:id', MasterDataController.Brand_Api.delete_brand)
+router.get('/delete/brand/:id', MasterDataController.Brand_Api.delete_brand)
+
+// manage master data car detail
+router.post('/create/car/detail', MasterDataController.Car_Detail_Api.create_car_detail)
+router.post('/update/car/detail/:id', MasterDataController.Car_Detail_Api.update_car_detail)
+router.get('/delete/car/detail/:id', MasterDataController.Car_Detail_Api.delete_car_detail)
 
 // manage user
 router.post('/register', authAdmin, UserController.user_register);

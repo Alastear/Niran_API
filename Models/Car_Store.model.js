@@ -6,11 +6,11 @@ const CarStoreSchema = new Schema({
     type: String,
     required: true
   },
-  brand_name : {
+  brand_name: {
     type: String,
     required: true
   },
-  model_name : {
+  model_name: {
     type: String,
     required: true
   },
@@ -26,6 +26,9 @@ const CarStoreSchema = new Schema({
   },
   cars_moredetail: {
     type: Map,
+  },
+  cars_description: {
+    type: String,
   },
   cars_status: {
     type: String,

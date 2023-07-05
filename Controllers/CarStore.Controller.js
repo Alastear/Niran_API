@@ -23,6 +23,7 @@ module.exports = {
 
   create_car_store: async (req, res, next) => {
     try {
+      const body = req.body;
       const date = new Date();
       const randomImageName = crypto.randomBytes(32).toString('hex');
       const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
@@ -32,21 +33,11 @@ module.exports = {
         Body: buffer,
         ContentType: req.file.mimetype,
       };
-      const body = {
-        cars_title: "Hyundai Grand i10 Nios",
-        brand_name: "Hyundai",
-        model_name: "Grand i10 Nios",
-        cars_image_default: randomImageName,
-        cars_image: [],
-        cars_detail: {
-          color: "red",
-          mile: "121221",
-          wheel: "4"
-        },
-        cars_status: "SELL",
-        updateDate: date,
-        createDate: date,
-      }
+      body.cars_image_default = randomImageName;
+      body.cars_image = [];
+      body.cars_status = 'SELL';
+      body.updateDate = date;
+      body.createDate = date;
       const command = new PutObjectCommand(params);
       await s3.send(command);
       const carStore = await CarStore(body);

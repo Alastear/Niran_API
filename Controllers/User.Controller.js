@@ -53,7 +53,6 @@ module.exports = {
     try {
 
       const result = await User.findOne({ username: params.username });
-      console.log(result);
       if (result && (await bcrypt.compare(params.password, result.password))) {
 
         const access_token = jwt.sign(
