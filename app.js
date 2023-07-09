@@ -19,7 +19,7 @@ app.use('/api/user', UserRoute);
 const AdminRoute = require('./Routes/Admin.route');
 app.use('/api/admin', auth, AdminRoute);
 
-app.post("/welcome", auth, (req, res) => {
+app.get("/welcome", auth, (req, res) => {
   res.status(200).send("Welcome 🙌 ");
 });
 

@@ -59,7 +59,7 @@ module.exports = {
           { user_id: result._id, user_name: result.username, user_position: result.position },
           process.env.TOKEN_KEY,
           {
-            expiresIn: "365d",
+            expiresIn: "1d",
           }
         );
 
@@ -67,7 +67,7 @@ module.exports = {
           { user_id: result._id },
           process.env.REFRESH_TOKEN_KEY,
           {
-            expiresIn: "365d",
+            expiresIn: "30d",
           }
         );
         result.access_token = access_token;
