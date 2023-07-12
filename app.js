@@ -38,7 +38,7 @@ const AdminRoute = require('./Routes/Admin.route');
 app.use('/api/admin', auth, AdminRoute);
 
 app.get("/", (req, res) => {
-  res.status(200).send({status : "success"});
+  res.status(200).send({ status: "success" });
 });
 
 // app.use((req, res, next) => {
@@ -57,7 +57,6 @@ app.use((err, req, res, next) => {
 });
 
 
-
-app.listen(PORT, () => {
-  console.log('Server started on port ' + PORT + '...');
-});
+// app.listen(PORT, () => {
+//   console.log('Server started on port ' + PORT + '...');
+// });
