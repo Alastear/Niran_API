@@ -17,6 +17,22 @@ const whitelist = [
   '*'
 ];
 
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+}
+
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log('Server started on port ' + PORT + '...');
+  });
+})
+
 app.use((req, res, next) => {
   const origin = req.get('referer');
   const isWhitelisted = whitelist.find((w) => origin && origin.includes(w));
@@ -30,22 +46,6 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') res.sendStatus(200);
   else next();
 });
-
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.log(error);
-    process.exit(1);
-  }
-}
-
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log("listening for requests");
-  })
-})
 
 const CarStoreRoute = require('./Routes/Car_Store.route');
 app.use('/api/store', CarStoreRoute);
@@ -69,7 +69,3 @@ app.use((err, req, res, next) => {
   });
 });
 
-
-app.listen(PORT, () => {
-  console.log('Server started on port ' + PORT + '...');
-});
