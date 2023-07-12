@@ -11,6 +11,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Initialize DB
 // require('./initDB')();
+const PORT = process.env.PORT || 3000;
 
 const CarStoreRoute = require('./Routes/Car_Store.route');
 app.use('/api/store', CarStoreRoute);
@@ -25,7 +26,7 @@ app.get("/welcome", auth, (req, res) => {
 
 //404 handler and pass to error handler
 app.use((req, res, next) => {
-
+  console.log("port : ", PORT);
   next(createError(404, 'Not found'));
 });
 
@@ -40,7 +41,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+
 
 app.listen(PORT, () => {
   console.log('Server started on port ' + PORT + '...');
