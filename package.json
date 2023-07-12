@@ -1,7 +1,7 @@
 {
-  "name": "restapi_youtube",
+  "name": "niran_backend",
   "version": "1.0.0",
-  "description": "Youtube Tutorial",
+  "description": "Niran Cars",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",

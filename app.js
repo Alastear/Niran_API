@@ -38,7 +38,7 @@ const AdminRoute = require('./Routes/Admin.route');
 app.use('/api/admin', auth, AdminRoute);
 
 app.get("/", (req, res) => {
-  res.status(200).send("Welcome 🙌 ");
+  res.status(200).send({status : "success"});
 });
 
 // app.use((req, res, next) => {
