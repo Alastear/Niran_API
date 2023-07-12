@@ -1,7 +1,8 @@
 const express = require('express');
 const createError = require('http-errors');
 const dotenv = require('dotenv').config();
-require("./database/config").connect();
+// require("./database/config").connect();
+const mongoose = require("mongoose");
 const auth = require("./middleware/auth");
 const authAdmin = require("./middleware/authAdmin");
 const app = express();
@@ -29,6 +30,22 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') res.sendStatus(200);
   else next();
 });
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+}
+
+connectDB().then(() => {
+  app.listen(PORT, () => {
+      console.log("listening for requests");
+  })
+})
 
 const CarStoreRoute = require('./Routes/Car_Store.route');
 app.use('/api/store', CarStoreRoute);
