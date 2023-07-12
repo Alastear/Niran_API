@@ -9,8 +9,7 @@ var cors = require('cors');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Initialize DB
-// require('./initDB')();
+
 const PORT = process.env.PORT || 3000;
 
 const CarStoreRoute = require('./Routes/Car_Store.route');
@@ -20,15 +19,13 @@ app.use('/api/user', UserRoute);
 const AdminRoute = require('./Routes/Admin.route');
 app.use('/api/admin', auth, AdminRoute);
 
-app.get("/welcome", auth, (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).send("Welcome 🙌 ");
 });
 
-//404 handler and pass to error handler
-app.use((req, res, next) => {
-  console.log("port : ", PORT);
-  next(createError(404, 'Not found'));
-});
+// app.use((req, res, next) => {
+//   next(createError(404, 'Not found'));
+// });
 
 //Error handler
 app.use((err, req, res, next) => {
