@@ -33,7 +33,7 @@ app.use((req, res, next) => {
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    const conn = await mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.log(error);
@@ -43,7 +43,7 @@ const connectDB = async () => {
 
 connectDB().then(() => {
   app.listen(PORT, () => {
-      console.log("listening for requests");
+    console.log("listening for requests");
   })
 })
 
@@ -57,10 +57,6 @@ app.use('/api/admin', auth, AdminRoute);
 app.get("/", (req, res) => {
   res.status(200).send({ status: "success" });
 });
-
-// app.use((req, res, next) => {
-//   next(createError(404, 'Not found'));
-// });
 
 //Error handler
 app.use((err, req, res, next) => {
