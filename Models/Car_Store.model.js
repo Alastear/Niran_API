@@ -24,7 +24,7 @@ const CarStoreSchema = new Schema({
     type: Map,
     required: true
   },
-  cars_moredetail: {
+  cars_subdetail: {
     type: Map,
   },
   cars_description: {
