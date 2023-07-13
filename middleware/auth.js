@@ -13,7 +13,7 @@ const verifyToken = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.TOKEN_KEY);
         req.user = decoded;
         const result = await User.findOne({ _id: req.user.user_id });
-        console.log(result);
+        // console.log(result);
         if (!result) {
             return res.status(401).send("Invalid User");
         }

@@ -29,10 +29,11 @@ module.exports = {
       const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
       const params = {
         Bucket: bucket_name,
-        Key: `Category/Default/${randomImageName}`,
+        Key: `Category/Default/${randomImageName}.${req.file.mimetype.split("/")[1]}`,
         Body: buffer,
         ContentType: req.file.mimetype,
       };
+      console.log(params);
       body.cars_image_default = randomImageName;
       body.cars_image = [];
       body.cars_status = 'SELL';
