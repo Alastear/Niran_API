@@ -87,6 +87,45 @@ module.exports = {
     }
   },
 
+  user_refresh_login: async (req, res, next) => {
+    const params = req.body;
+    try {
+
+      const result = await User.findOne({ username: params.username });
+      if (result) {
+
+        const access_token = jwt.sign(
+          { user_id: result._id, user_name: result.username, user_position: result.position },
+          process.env.TOKEN_KEY,
+          {
+            expiresIn: "1d",
+          }
+        );
+
+        const refresh_token = jwt.sign(
+          { user_id: result._id },
+          process.env.REFRESH_TOKEN_KEY,
+          {
+            expiresIn: "30d",
+          }
+        );
+        result.access_token = access_token;
+        result.refresh_token = refresh_token;
+        res.send({ result, access_token, refresh_token });
+      } else {
+        return;
+      }
+
+    } catch (error) {
+      console.log(error.message);
+      if (error instanceof mongoose.CastError) {
+        next(createError(400, 'Invalid Product id'));
+        return;
+      }
+      next(error);
+    }
+  },
+
   update_user: async (req, res, next) => {
     try {
       console.log(req.user);

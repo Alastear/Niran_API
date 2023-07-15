@@ -9,6 +9,6 @@ const UserController = require('../Controllers/User.Controller');
 router.post('/login', UserController.user_login);
 
 // refresh token
-router.post('/refresh/token', auth_refreshToken, UserController.user_login);
+router.post('/refresh/token', auth_refreshToken, UserController.user_refresh_login);
 
 module.exports = router;
