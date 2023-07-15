@@ -80,6 +80,17 @@ module.exports = {
     }
   },
 
+  get_car_by_id: async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      console.log(query);
+      const results = await CarStore.findById(id, { __v: 0 })
+      res.send(results);
+    } catch (error) {
+      console.log(error.message);
+    }
+  },
+
   update_car_store: async (req, res, next) => {
     try {
       const id = req.params.id;

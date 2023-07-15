@@ -5,8 +5,9 @@ const auth = require("../middleware/auth");
 const CarStoreController = require('../Controllers/CarStore.Controller');
 const MasterDataController = require('../Controllers/MasterData.Controller');
 
-//Get list of all cars
+//Get list of cars
 router.get('/cars', CarStoreController.get_all_car_store);
+router.get('/cars/:id', CarStoreController.get_car_by_id);
 
 //Get list of all model
 router.get('/models', MasterDataController.Model_Api.get_all_model);
