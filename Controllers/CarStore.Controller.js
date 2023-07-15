@@ -34,11 +34,17 @@ module.exports = {
         ContentType: req.file.mimetype,
       };
       console.log(params);
-      body.cars_image_default = randomImageName;
+      body.cars_image_default = `${randomImageName}.${req.file.mimetype.split("/")[1]}`;
       body.cars_image = [];
       body.cars_status = 'SELL';
       body.updateDate = date;
       body.createDate = date;
+      if (body.cars_detail) {
+        body.cars_detail = JSON.parse(body.cars_detail);
+      }
+      if (body.cars_subdetail) {
+        body.cars_subdetail = JSON.parse(body.cars_subdetail);
+      }
       const command = new PutObjectCommand(params);
       await s3.send(command);
       const carStore = await CarStore(body);
@@ -128,11 +134,11 @@ module.exports = {
         const buffer = await sharp(imagelist[index].buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
         const params = {
           Bucket: bucket_name,
-          Key: `Category/${id}/${randomImageName}`,
+          Key: `Category/${id}/${randomImageName}.${imagelist[index].mimetype.split("/")[1]}`,
           Body: buffer,
           ContentType: imagelist[index].mimetype,
         };
-        body.cars_image.push(`${randomImageName}`)
+        body.cars_image.push(`${randomImageName}.${imagelist[index].mimetype.split("/")[1]}`)
         body.updateDate = date;
         const command = new PutObjectCommand(params);
         const setImage = await s3.send(command).then(() => { })

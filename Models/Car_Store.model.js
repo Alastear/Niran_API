@@ -25,7 +25,7 @@ const CarStoreSchema = new Schema({
     required: true
   },
   cars_subdetail: {
-    type: Map,
+    type: Array,
   },
   cars_description: {
     type: String,
@@ -33,6 +33,9 @@ const CarStoreSchema = new Schema({
   cars_status: {
     type: String,
     required: true
+  },
+  cars_tag: {
+    type: String,
   },
   updateDate: {
     type: Date,
