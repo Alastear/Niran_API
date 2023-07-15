@@ -33,7 +33,6 @@ module.exports = {
         Body: buffer,
         ContentType: req.file.mimetype,
       };
-      console.log(params);
       body.cars_image_default = `${randomImageName}.${req.file.mimetype.split("/")[1]}`;
       body.cars_image = [];
       body.cars_status = 'SELL';
@@ -92,7 +91,7 @@ module.exports = {
         const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
         const params = {
           Bucket: bucket_name,
-          Key: updates.cars_image_default,
+          Key: `Category/Default/${updates.cars_image_default}`,
           Body: buffer,
           ContentType: req.file.mimetype,
         };
@@ -202,7 +201,6 @@ module.exports = {
     const id = req.params.id;
     try {
       const result = await CarStore.findByIdAndDelete(id);
-      console.log(result);
       if (!result) {
         throw createError(404, 'Product does not exist.');
       }

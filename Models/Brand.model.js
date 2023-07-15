@@ -10,7 +10,7 @@ const BrandSchema = new Schema({
     type: String,
   },
   brand_image: {
-    type: Array,
+    type: String,
   },
   updateDate: {
     type: Date,

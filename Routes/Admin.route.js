@@ -22,8 +22,8 @@ router.post('/update/model/:id', MasterDataController.Model_Api.update_model)
 router.get('/delete/model/:id', MasterDataController.Model_Api.delete_model)
 
 // manage master data brand
-router.post('/create/brand', MasterDataController.Brand_Api.create_brand)
-router.post('/update/brand/:id', MasterDataController.Brand_Api.update_brand)
+router.post('/create/brand', upload.single('image'), MasterDataController.Brand_Api.create_brand)
+router.post('/update/brand/:id', upload.single('image'), MasterDataController.Brand_Api.update_brand)
 router.get('/delete/brand/:id', MasterDataController.Brand_Api.delete_brand)
 
 // manage master data car detail
