@@ -74,7 +74,7 @@ module.exports = {
         result.refresh_token = refresh_token;
         res.send({ result, access_token, refresh_token });
       } else {
-        return;
+        throw createError(404, "This username can't login");
       }
 
     } catch (error) {
@@ -88,10 +88,10 @@ module.exports = {
   },
 
   user_refresh_login: async (req, res, next) => {
-    const params = req.body;
+    const id = req.body;
     try {
 
-      const result = await User.findOne({ username: params.username });
+      const result = await User.findOne(id);
       if (result) {
 
         const access_token = jwt.sign(
@@ -113,7 +113,7 @@ module.exports = {
         result.refresh_token = refresh_token;
         res.send({ result, access_token, refresh_token });
       } else {
-        return;
+        throw createError(404, "This username can't login");
       }
 
     } catch (error) {
