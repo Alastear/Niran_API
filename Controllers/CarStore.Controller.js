@@ -96,6 +96,12 @@ module.exports = {
       const updates = req.body ?? {};
       const date = new Date();
       updates.updateDate = date;
+      if (updates.cars_detail) {
+        updates.cars_detail = JSON.parse(updates.cars_detail);
+      }
+      if (updates.cars_subdetail) {
+        updates.cars_subdetail = JSON.parse(updates.cars_subdetail);
+      }
       const options = { new: true };
       if (req.file) {
         const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();

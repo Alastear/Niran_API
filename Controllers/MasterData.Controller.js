@@ -95,6 +95,7 @@ module.exports = {
     create_brand: async (req, res, next) => {
       try {
         const body = req.body
+        console.log(body);
         if (req.file) {
           const buffer = await sharp(req.file.buffer).toBuffer();
           const params = {
