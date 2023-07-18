@@ -97,10 +97,11 @@ module.exports = {
         const body = req.body
         console.log(body);
         if (req.file) {
+          const randomImageName = crypto.randomBytes(32).toString('hex');
           const buffer = await sharp(req.file.buffer).toBuffer();
           const params = {
             Bucket: bucket_name,
-            Key: `Category/Brand/${body.brand_name}`,
+            Key: `Category/Brand/${randomImageName}`,
             Body: buffer,
             ContentType: req.file.mimetype,
           };
@@ -109,7 +110,7 @@ module.exports = {
         }
         const date = new Date();
         if (req.file)
-          body.brand_image = body.brand_name;
+          body.brand_image = body.randomImageName;
         body.updateDate = date;
         const brands = await Brand(body);
         const result = await brands.save();
@@ -128,6 +129,8 @@ module.exports = {
         const options = { new: true };
         if (req.file) {
           const buffer = await sharp(req.file.buffer).toBuffer();
+          const randomImageName = crypto.randomBytes(32).toString('hex');
+          updates.brand_image = updates.brand_image ?? randomImageName;
           const params = {
             Bucket: bucket_name,
             Key: `Category/Brand/${updates.brand_image}`,
