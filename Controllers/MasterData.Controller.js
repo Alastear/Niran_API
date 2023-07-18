@@ -98,6 +98,7 @@ module.exports = {
         console.log(body);
         if (req.file) {
           const randomImageName = crypto.randomBytes(32).toString('hex');
+          body.brand_image = randomImageName;
           const buffer = await sharp(req.file.buffer).toBuffer();
           const params = {
             Bucket: bucket_name,
@@ -109,8 +110,6 @@ module.exports = {
           await s3.send(command);
         }
         const date = new Date();
-        if (req.file)
-          body.brand_image = body.randomImageName;
         body.updateDate = date;
         const brands = await Brand(body);
         const result = await brands.save();
