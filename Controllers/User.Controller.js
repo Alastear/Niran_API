@@ -59,7 +59,7 @@ module.exports = {
           { user_id: result._id, user_name: result.username, user_position: result.position },
           process.env.TOKEN_KEY,
           {
-            expiresIn: "1d",
+            expiresIn: "7d",
           }
         );
 
@@ -98,7 +98,7 @@ module.exports = {
           { user_id: result._id, user_name: result.username, user_position: result.position },
           process.env.TOKEN_KEY,
           {
-            expiresIn: "1d",
+            expiresIn: "7d",
           }
         );
 
