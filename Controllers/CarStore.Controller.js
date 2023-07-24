@@ -104,16 +104,25 @@ module.exports = {
       }
       const options = { new: true };
       if (req.file) {
+        const randomImageName = crypto.randomBytes(32).toString('hex');
         const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
         const params = {
           Bucket: bucket_name,
-          Key: `Category/Default/${updates.cars_image_default}`,
+          Key: `Category/Default/${randomImageName}.${req.file.mimetype.split("/")[1]}`,
           Body: buffer,
           ContentType: req.file.mimetype,
         };
         const command = new PutObjectCommand(params);
         await s3.send(command);
 
+        const paramsDeleteImage = {
+          Bucket: bucket_name,
+          Key: `Category/Default/${updates.cars_image_default}`
+        }
+        const commandDelete = new DeleteObjectCommand(paramsDeleteImage);
+        await s3.send(commandDelete);
+
+        updates.cars_image_default = `${randomImageName}.${req.file.mimetype.split("/")[1]}`;
         const result = await CarStore.findByIdAndUpdate(id, updates, options);
         if (!result) {
           throw createError(404, 'Product does not exist');
@@ -243,7 +252,6 @@ module.exports = {
         }
         const command = new DeleteObjectCommand(paramsDeleteImage);
         await s3.send(command);
-
         res.send(result);
       }
 
