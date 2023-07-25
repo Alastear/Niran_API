@@ -10,6 +10,9 @@ const ModelSchema = new Schema({
     type: String,
     required: true
   },
+  model_submodel: {
+    type: Array,
+  },
   model_description: {
     type: String,
   },
