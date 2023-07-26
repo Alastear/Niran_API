@@ -49,6 +49,8 @@ module.exports = {
       try {
         const id = req.params.id
         const updates = req.body
+        if (updates.model_submodel)
+          updates.model_submodel = JSON.parse(updates.model_submodel)
         const date = new Date();
         updates.updateDate = date;
         const options = { new: true };
