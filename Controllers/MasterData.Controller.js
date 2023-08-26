@@ -32,6 +32,16 @@ module.exports = {
       }
     },
 
+    get_model_by_id: async (req, res, next) => {
+      try {
+        const id = req.params.id;
+        const results = await Model.findById(id, { __v: 0 })
+        res.send(results);
+      } catch (error) {
+        console.log(error.message);
+      }
+    },
+
     create_model: async (req, res, next) => {
       try {
         const body = req.body
@@ -88,6 +98,16 @@ module.exports = {
     get_all_brand: async (req, res, next) => {
       try {
         const results = await Brand.find({}, { __v: 0 });
+        res.send(results);
+      } catch (error) {
+        console.log(error.message);
+      }
+    },
+
+    get_brand_by_id: async (req, res, next) => {
+      try {
+        const id = req.params.id;
+        const results = await Brand.findById(id, { __v: 0 })
         res.send(results);
       } catch (error) {
         console.log(error.message);
