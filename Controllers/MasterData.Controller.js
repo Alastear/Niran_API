@@ -1,270 +1,259 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, DeleteObjectsCommand } = require("@aws-sdk/client-s3");
+const { put, del } = require('@vercel/blob');
 const createError = require('http-errors');
-const mongoose = require('mongoose');
-const Brand = require('../Models/Brand.model');
-const Model = require('../Models/Model.model');
-const Detail = require('../Models/Car_Data_Detail.model');
 const crypto = require('crypto');
-const fs = require("fs");
 const sharp = require('sharp');
+const { eq } = require('drizzle-orm');
+const { db, schema } = require('../database/db');
 
-const bucket_name = process.env.BUCKET_NAME
-const bucket_rerion = process.env.BUCKET_RERION
-const access_key = process.env.ACCESS_KEY
-const secret_access_key = process.env.SECRET_ACCESS_KEY
-
-const s3 = new S3Client({
-  credentials: {
-    accessKeyId: access_key,
-    secretAccessKey: secret_access_key,
-  },
-  region: bucket_rerion
-})
+const Brand = schema.masterBrand;
+const Model = schema.masterModel;
+const Detail = schema.carDataDetail;
 
 module.exports = {
   Model_Api: {
     get_all_model: async (req, res, next) => {
       try {
-        const results = await Model.find({}, { __v: 0 });
+        const results = await db.select().from(Model);
         res.send(results);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     get_model_by_id: async (req, res, next) => {
       try {
-        const id = req.params.id;
-        const results = await Model.findById(id, { __v: 0 })
-        res.send(results);
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const [result] = await db.select().from(Model).where(eq(Model._id, id));
+        res.send(result ?? null);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     create_model: async (req, res, next) => {
       try {
-        const body = req.body
-        const date = new Date();
-        body.updateDate = date;
-        const models = await Model(body);
-        const result = await models.save();
+        const body = req.body;
+        const values = {
+          model_name: body.model_name,
+          brand_name: body.brand_name,
+          model_submodel: body.model_submodel
+            ? (typeof body.model_submodel === 'string' ? JSON.parse(body.model_submodel) : body.model_submodel)
+            : [],
+          model_description: body.model_description,
+          model_image: body.model_image
+            ? (typeof body.model_image === 'string' ? JSON.parse(body.model_image) : body.model_image)
+            : [],
+          updateDate: new Date(),
+        };
+        const [result] = await db.insert(Model).values(values).returning();
         res.send(result);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     update_model: async (req, res, next) => {
       try {
-        const id = req.params.id
-        const updates = req.body
-        if (updates.model_submodel)
-          updates.model_submodel = JSON.parse(updates.model_submodel)
-        const date = new Date();
-        updates.updateDate = date;
-        const options = { new: true };
-        const result = await Model.findByIdAndUpdate(id, updates, options);
-        if (!result) {
-          throw createError(404, 'Product does not exist');
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const body = req.body;
+        const updates = {};
+        for (const k of ['model_name', 'brand_name', 'model_description']) {
+          if (body[k] !== undefined) updates[k] = body[k];
         }
-        res.send(result)
+        if (body.model_submodel) {
+          updates.model_submodel = typeof body.model_submodel === 'string' ? JSON.parse(body.model_submodel) : body.model_submodel;
+        }
+        if (body.model_image) {
+          updates.model_image = typeof body.model_image === 'string' ? JSON.parse(body.model_image) : body.model_image;
+        }
+        updates.updateDate = new Date();
+
+        const [result] = await db.update(Model).set(updates).where(eq(Model._id, id)).returning();
+        if (!result) throw createError(404, 'Product does not exist');
+        res.send(result);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     delete_model: async (req, res, next) => {
       try {
-        const id = req.params.id;
-        const result = await Model.findByIdAndDelete(id);
-        if (!result) {
-          throw createError(404, 'Product does not exist.');
-        }
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const [result] = await db.delete(Model).where(eq(Model._id, id)).returning();
+        if (!result) throw createError(404, 'Product does not exist.');
         res.send(result);
       } catch (error) {
         console.log(error.message);
-        if (error instanceof mongoose.CastError) {
-          next(createError(400, 'Invalid Product id'));
-          return;
-        }
         next(error);
       }
-    }
-
+    },
   },
 
   Brand_Api: {
     get_all_brand: async (req, res, next) => {
       try {
-        const results = await Brand.find({}, { __v: 0 });
+        const results = await db.select().from(Brand);
         res.send(results);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     get_brand_by_id: async (req, res, next) => {
       try {
-        const id = req.params.id;
-        const results = await Brand.findById(id, { __v: 0 })
-        res.send(results);
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const [result] = await db.select().from(Brand).where(eq(Brand._id, id));
+        res.send(result ?? null);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     create_brand: async (req, res, next) => {
       try {
-        const body = req.body
-        console.log(body);
+        const body = req.body;
+        const values = {
+          brand_name: body.brand_name,
+          brand_description: body.brand_description,
+          updateDate: new Date(),
+        };
         if (req.file) {
-          const randomImageName = crypto.randomBytes(32).toString('hex');
-          body.brand_image = randomImageName;
+          const randomName = crypto.randomBytes(16).toString('hex');
           const buffer = await sharp(req.file.buffer).toBuffer();
-          const params = {
-            Bucket: bucket_name,
-            Key: `Category/Brand/${randomImageName}`,
-            Body: buffer,
-            ContentType: req.file.mimetype,
-          };
-          const command = new PutObjectCommand(params);
-          await s3.send(command);
+          const blob = await put(`Category/Brand/${randomName}`, buffer, {
+            access: 'public',
+            contentType: req.file.mimetype,
+          });
+          values.brand_image = blob.url;
         }
-        const date = new Date();
-        body.updateDate = date;
-        const brands = await Brand(body);
-        const result = await brands.save();
+        const [result] = await db.insert(Brand).values(values).returning();
         res.send(result);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     update_brand: async (req, res, next) => {
       try {
-        const id = req.params.id
-        const updates = req.body
-        const date = new Date();
-        updates.updateDate = date;
-        const options = { new: true };
-        if (req.file) {
-          const buffer = await sharp(req.file.buffer).toBuffer();
-          const randomImageName = crypto.randomBytes(32).toString('hex');
-          updates.brand_image = updates.brand_image ?? randomImageName;
-          const params = {
-            Bucket: bucket_name,
-            Key: `Category/Brand/${updates.brand_image}`,
-            Body: buffer,
-            ContentType: req.file.mimetype,
-          };
-          const command = new PutObjectCommand(params);
-          await s3.send(command);
-          const result = await Brand.findByIdAndUpdate(id, updates, options);
-          if (!result) {
-            throw createError(404, 'Product does not exist');
-          }
-          res.send(result)
-        } else {
-          const result = await Brand.findByIdAndUpdate(id, updates, options);
-          if (!result) {
-            throw createError(404, 'Product does not exist');
-          }
-          res.send(result)
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const body = req.body;
+        const updates = {};
+        for (const k of ['brand_name', 'brand_description']) {
+          if (body[k] !== undefined) updates[k] = body[k];
         }
+        updates.updateDate = new Date();
+
+        if (req.file) {
+          // ลบรูปเดิม (brand_image ที่ frontend ส่งมาเป็น full URL)
+          if (body.brand_image) {
+            await del(body.brand_image);
+          }
+          const randomName = crypto.randomBytes(16).toString('hex');
+          const buffer = await sharp(req.file.buffer).toBuffer();
+          const blob = await put(`Category/Brand/${randomName}`, buffer, {
+            access: 'public',
+            contentType: req.file.mimetype,
+          });
+          updates.brand_image = blob.url;
+        }
+
+        const [result] = await db.update(Brand).set(updates).where(eq(Brand._id, id)).returning();
+        if (!result) throw createError(404, 'Product does not exist');
+        res.send(result);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     delete_brand: async (req, res, next) => {
       try {
-        const id = req.params.id;
-        const result = await Brand.findByIdAndDelete(id);
-        if (!result) {
-          throw createError(404, 'Product does not exist.');
-        }
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const [result] = await db.delete(Brand).where(eq(Brand._id, id)).returning();
+        if (!result) throw createError(404, 'Product does not exist.');
         if (result.brand_image) {
-          const paramsDeleteImage = {
-            Bucket: bucket_name,
-            Key: `Category/Brand/${result.brand_image}`
-          }
-          const command = new DeleteObjectCommand(paramsDeleteImage);
-          await s3.send(command);
-
-          res.send(result);
-        } else {
-          res.send(result);
+          await del(result.brand_image);
         }
-
+        res.send(result);
       } catch (error) {
         console.log(error.message);
-        if (error instanceof mongoose.CastError) {
-          next(createError(400, 'Invalid Product id'));
-          return;
-        }
         next(error);
       }
-    }
+    },
   },
+
   Car_Detail_Api: {
     get_all_car_detail: async (req, res, next) => {
       try {
-        const results = await Detail.find({}, { __v: 0 });
+        const results = await db.select().from(Detail);
         res.send(results);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     create_car_detail: async (req, res, next) => {
       try {
-        const body = req.body
-        const date = new Date();
-        body.updateDate = date;
-        const details = await Detail(body);
-        const result = await details.save();
+        const body = req.body;
+        const values = {
+          cardt_title: body.cardt_title,
+          cardt_type: body.cardt_type,
+          cardt_description: body.cardt_description,
+          updateDate: new Date(),
+        };
+        const [result] = await db.insert(Detail).values(values).returning();
         res.send(result);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     update_car_detail: async (req, res, next) => {
       try {
-        const id = req.params.id
-        const updates = req.body
-        const date = new Date();
-        updates.updateDate = date;
-        const options = { new: true };
-        const result = await Detail.findByIdAndUpdate(id, updates, options);
-        if (!result) {
-          throw createError(404, 'Product does not exist');
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const body = req.body;
+        const updates = {};
+        for (const k of ['cardt_title', 'cardt_type', 'cardt_description']) {
+          if (body[k] !== undefined) updates[k] = body[k];
         }
-        res.send(result)
+        updates.updateDate = new Date();
+
+        const [result] = await db.update(Detail).set(updates).where(eq(Detail._id, id)).returning();
+        if (!result) throw createError(404, 'Product does not exist');
+        res.send(result);
       } catch (error) {
         console.log(error.message);
+        next(error);
       }
     },
 
     delete_car_detail: async (req, res, next) => {
       try {
-        const id = req.params.id;
-        const result = await Detail.findByIdAndDelete(id);
-        if (!result) {
-          throw createError(404, 'Product does not exist.');
-        }
+        const id = Number(req.params.id);
+        if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
+        const [result] = await db.delete(Detail).where(eq(Detail._id, id)).returning();
+        if (!result) throw createError(404, 'Product does not exist.');
         res.send(result);
       } catch (error) {
         console.log(error.message);
-        if (error instanceof mongoose.CastError) {
-          next(createError(400, 'Invalid Product id'));
-          return;
-        }
         next(error);
       }
-    }
-  }
-
-
+    },
+  },
 };

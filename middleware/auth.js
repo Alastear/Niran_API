@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
-const User = require('../Models/User.model');
+const { eq } = require("drizzle-orm");
+const { db, schema } = require('../database/db');
 
 const verifyToken = async (req, res, next) => {
 
@@ -12,7 +13,7 @@ const verifyToken = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.TOKEN_KEY);
         req.user = decoded;
-        const result = await User.findOne({ _id: req.user.user_id });
+        const [result] = await db.select().from(schema.users).where(eq(schema.users._id, Number(req.user.user_id)));
         // console.log(result);
         if (!result) {
             return res.status(401).send("Invalid User");

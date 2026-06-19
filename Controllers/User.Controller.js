@@ -1,37 +1,34 @@
 const createError = require('http-errors');
 const bcrypt = require('bcryptjs');
 var jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
-const User = require('../Models/User.model');
-// const dotenv = require('dotenv').config();
-module.exports = {
+const { eq } = require('drizzle-orm');
+const { db, schema } = require('../database/db');
 
+const users = schema.users;
+
+module.exports = {
 
   user_register: async (req, res, next) => {
     try {
       const body = req.body;
-      const finduser = await User.findOne({ username: body.username, });
+      const [finduser] = await db.select().from(users).where(eq(users.username, body.username));
       if (!finduser) {
-        encryptedPassword = await bcrypt.hash(body.password, 10);
-        const date = Date.now();
-        const user = new User(
-          {
-            username: body.username,
-            password: encryptedPassword,
-            position: body.position,
-            createDate: date,
-            updateDate: date,
-          }
-        );
-        const result = await user.save();
+        const encryptedPassword = await bcrypt.hash(body.password, 10);
+        const date = new Date();
+        const [result] = await db.insert(users).values({
+          username: body.username,
+          password: encryptedPassword,
+          position: body.position,
+          createDate: date,
+          updateDate: date,
+        }).returning();
         res.send(result);
       } else {
-        res.send({ error: "Invalid User Data" })
+        res.send({ error: "Invalid User Data" });
       }
-
     } catch (error) {
       console.log(error.message);
-      if (error.name === 'ValidationError') {
+      if (error.code === '23502') {
         next(createError(422, error.message));
         return;
       }
@@ -41,34 +38,38 @@ module.exports = {
 
   get_all_user: async (req, res, next) => {
     try {
-      const results = await User.find({}, { __v: 0 }).select("-password");
+      const results = await db.select({
+        _id: users._id,
+        username: users.username,
+        email: users.email,
+        tel: users.tel,
+        position: users.position,
+        createDate: users.createDate,
+        updateDate: users.updateDate,
+      }).from(users);
       res.send(results);
     } catch (error) {
       console.log(error.message);
+      next(error);
     }
   },
 
   user_login: async (req, res, next) => {
     const params = req.body;
     try {
-
-      const result = await User.findOne({ username: params.username });
+      const [result] = await db.select().from(users).where(eq(users.username, params.username));
       if (result && (await bcrypt.compare(params.password, result.password))) {
 
         const access_token = jwt.sign(
           { user_id: result._id, user_name: result.username, user_position: result.position },
           process.env.TOKEN_KEY,
-          {
-            expiresIn: "7d",
-          }
+          { expiresIn: "7d" }
         );
 
         const refresh_token = jwt.sign(
           { user_id: result._id },
           process.env.REFRESH_TOKEN_KEY,
-          {
-            expiresIn: "30d",
-          }
+          { expiresIn: "30d" }
         );
         result.access_token = access_token;
         result.refresh_token = refresh_token;
@@ -76,38 +77,31 @@ module.exports = {
       } else {
         throw createError(404, "This username can't login");
       }
-
     } catch (error) {
       console.log(error.message);
-      if (error instanceof mongoose.CastError) {
-        next(createError(400, 'Invalid Product id'));
-        return;
-      }
       next(error);
     }
   },
 
   user_refresh_login: async (req, res, next) => {
-    const id = req.body;
     try {
+      // user_id comes from the verified refresh token (auth_refreshToken middleware)
+      const userId = Number(req.user?.user_id ?? req.body.user_id);
+      if (Number.isNaN(userId)) throw createError(400, 'Invalid user id');
 
-      const result = await User.findOne(id);
+      const [result] = await db.select().from(users).where(eq(users._id, userId));
       if (result) {
 
         const access_token = jwt.sign(
           { user_id: result._id, user_name: result.username, user_position: result.position },
           process.env.TOKEN_KEY,
-          {
-            expiresIn: "7d",
-          }
+          { expiresIn: "7d" }
         );
 
         const refresh_token = jwt.sign(
           { user_id: result._id },
           process.env.REFRESH_TOKEN_KEY,
-          {
-            expiresIn: "30d",
-          }
+          { expiresIn: "30d" }
         );
         result.access_token = access_token;
         result.refresh_token = refresh_token;
@@ -115,65 +109,53 @@ module.exports = {
       } else {
         throw createError(404, "This username can't login");
       }
-
     } catch (error) {
       console.log(error.message);
-      if (error instanceof mongoose.CastError) {
-        next(createError(400, 'Invalid Product id'));
-        return;
-      }
       next(error);
     }
   },
 
   update_user: async (req, res, next) => {
     try {
-      console.log(req.user);
-      const id = req.params.id
-      const date = Date.now();
-      const updates = req.body;
-      updates.updateDate = date;
-      const options = { new: true };
+      const id = Number(req.params.id);
+      if (Number.isNaN(id)) return next(createError(400, 'Invalid User id'));
+      const body = req.body;
 
-      const finduser = await User.findOne({ username: updates.username });
-      if (!finduser) {
-        if (updates.password) {
-          updates.password = await bcrypt.hash(updates.password, 10);
+      const updates = {};
+      for (const k of ['username', 'email', 'tel', 'position']) {
+        if (body[k] !== undefined) updates[k] = body[k];
+      }
+      if (body.password) {
+        updates.password = await bcrypt.hash(body.password, 10);
+      }
+      updates.updateDate = new Date();
+
+      // username must stay unique (allow keeping your own)
+      if (body.username) {
+        const [existing] = await db.select().from(users).where(eq(users.username, body.username));
+        if (existing && existing._id !== id) {
+          throw createError(404, "This username can't be used");
         }
-        const result = await User.findByIdAndUpdate(id, updates, options);
-        if (!result) {
-          throw createError(404, 'User does not exist');
-        }
-        res.send(result)
-      } else {
-        throw createError(404, "This username can't be used");
       }
 
+      const [result] = await db.update(users).set(updates).where(eq(users._id, id)).returning();
+      if (!result) throw createError(404, 'User does not exist');
+      res.send(result);
     } catch (error) {
       console.log(error.message);
-      if (error instanceof mongoose.CastError) {
-        next(createError(400, 'Invalid User id'));
-        return;
-      }
       next(error);
     }
   },
 
   delete_user: async (req, res, next) => {
-    const id = req.params.id;
     try {
-      const result = await User.findByIdAndDelete(id);
-      // console.log(result);
-      if (!result) {
-        throw createError(404, 'User does not exist.');
-      }
+      const id = Number(req.params.id);
+      if (Number.isNaN(id)) return next(createError(400, 'Invalid User id'));
+      const [result] = await db.delete(users).where(eq(users._id, id)).returning();
+      if (!result) throw createError(404, 'User does not exist.');
       res.send(result);
     } catch (error) {
       console.log(error.message);
-      if (error instanceof mongoose.CastError) {
-        next(createError(400, 'Invalid User id'));
-        return;
-      }
       next(error);
     }
   }
