@@ -171,4 +171,20 @@ router.get('/brands/:id', MasterDataController.Brand_Api.get_brand_by_id);
  */
 router.get('/car/detail', MasterDataController.Car_Detail_Api.get_all_car_detail);
 
+/**
+ * @swagger
+ * /api/store/contact:
+ *   get:
+ *     summary: ดึงข้อมูลติดต่อ/เต๊นท์รถ (สาขา, โซเชียล, QR)
+ *     tags: [Store - Contact]
+ *     responses:
+ *       200:
+ *         description: ข้อมูลติดต่อ (object เดียว — ถ้ายังไม่ตั้งค่าจะได้ {})
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/contact', MasterDataController.Contact_Api.get_contact);
+
 module.exports = router;

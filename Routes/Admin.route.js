@@ -730,4 +730,41 @@ router.post('/update/user/:id', authAdmin, UserController.update_user);
  */
 router.get('/delete/user/:id', authAdmin, UserController.delete_user)
 
+// ──────────────────────────────────────────────
+// Contact / site settings (เต๊นท์รถ)
+// ──────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/update/contact:
+ *   post:
+ *     summary: บันทึกข้อมูลติดต่อ/เต๊นท์รถทั้งก้อน (สาขา, โซเชียล, QR)
+ *     tags: [Admin - Contact]
+ *     security:
+ *       - AccessToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             example:
+ *               branches:
+ *                 - title: สาขา 1 สาขาบ้านไร่
+ *                   place: 191 ม.1 ต.ทัพหลวง อ.บ้านไร่ จ.อุทัยธานี
+ *                   tel: ["081-9727551 เจ๊ชมพู่", "098-7536681 นุ้ย"]
+ *                   map_link: https://maps.google.com/...
+ *               socials:
+ *                 - type: facebook
+ *                   name: นิรันดร์คาร์เซ็นเตอร์
+ *                   link: https://facebook.com/...
+ *               line_qr: https://qr-official.line.me/gs/....png
+ *     responses:
+ *       200:
+ *         description: บันทึกสำเร็จ (คืน object ที่บันทึก)
+ *       401:
+ *         description: ไม่มีสิทธิ์เข้าถึง
+ */
+router.post('/update/contact', MasterDataController.Contact_Api.update_contact);
+
 module.exports = router;

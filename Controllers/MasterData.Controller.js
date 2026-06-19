@@ -8,8 +8,46 @@ const { db, schema } = require('../database/db');
 const Brand = schema.masterBrand;
 const Model = schema.masterModel;
 const Detail = schema.carDataDetail;
+const ContactInfo = schema.contactInfo;
 
 module.exports = {
+  Contact_Api: {
+    // public: คืนค่า config ติดต่อ (object เดียว) — ถ้ายังไม่มีคืน {}
+    get_contact: async (req, res, next) => {
+      try {
+        const [row] = await db.select().from(ContactInfo).limit(1);
+        res.send(row ? row.data : {});
+      } catch (error) {
+        console.log(error.message);
+        next(error);
+      }
+    },
+
+    // admin: upsert ทั้งก้อน (singleton)
+    update_contact: async (req, res, next) => {
+      try {
+        const data = req.body || {};
+        const date = new Date();
+        const [existing] = await db.select().from(ContactInfo).limit(1);
+        let result;
+        if (existing) {
+          [result] = await db.update(ContactInfo)
+            .set({ data, updateDate: date })
+            .where(eq(ContactInfo._id, existing._id))
+            .returning();
+        } else {
+          [result] = await db.insert(ContactInfo)
+            .values({ data, updateDate: date })
+            .returning();
+        }
+        res.send(result.data);
+      } catch (error) {
+        console.log(error.message);
+        next(error);
+      }
+    },
+  },
+
   Model_Api: {
     get_all_model: async (req, res, next) => {
       try {

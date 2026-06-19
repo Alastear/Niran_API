@@ -58,4 +58,12 @@ const carStore = pgTable('car_store', {
   soldDate: timestamp('sold_date'),
 });
 
-module.exports = { users, masterBrand, masterModel, carDataDetail, carStore };
+// Singleton row holding the public "contact / dealer" config (branches, socials, line QR).
+// Stored as one jsonb blob so the shape can evolve without migrations.
+const contactInfo = pgTable('contact_info', {
+  _id: serial('id').primaryKey(),
+  data: jsonb('data').notNull(),
+  updateDate: timestamp('update_date').notNull(),
+});
+
+module.exports = { users, masterBrand, masterModel, carDataDetail, carStore, contactInfo };
