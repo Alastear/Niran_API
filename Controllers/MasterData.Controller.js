@@ -2,7 +2,7 @@ const { put, del } = require('@vercel/blob');
 const createError = require('http-errors');
 const crypto = require('crypto');
 const sharp = require('sharp');
-const { eq } = require('drizzle-orm');
+const { eq, asc } = require('drizzle-orm');
 const { db, schema } = require('../database/db');
 
 const Brand = schema.masterBrand;
@@ -137,8 +137,24 @@ module.exports = {
   Brand_Api: {
     get_all_brand: async (req, res, next) => {
       try {
-        const results = await db.select().from(Brand);
+        const results = await db.select().from(Brand).orderBy(asc(Brand.sort_order), asc(Brand.brand_name));
         res.send(results);
+      } catch (error) {
+        console.log(error.message);
+        next(error);
+      }
+    },
+
+    // จัดลำดับยี่ห้อใหม่ทั้งชุด — body: { ids: [brandId เรียงตามลำดับที่ต้องการ] }
+    reorder_brand: async (req, res, next) => {
+      try {
+        const ids = req.body.ids;
+        if (!Array.isArray(ids)) return next(createError(400, 'ids must be an array'));
+        const date = new Date();
+        for (let i = 0; i < ids.length; i++) {
+          await db.update(Brand).set({ sort_order: i, updateDate: date }).where(eq(Brand._id, Number(ids[i])));
+        }
+        res.send({ status: 'success', count: ids.length });
       } catch (error) {
         console.log(error.message);
         next(error);
@@ -191,6 +207,7 @@ module.exports = {
         for (const k of ['brand_name', 'brand_description']) {
           if (body[k] !== undefined) updates[k] = body[k];
         }
+        if (body.sort_order !== undefined) updates.sort_order = Number(body.sort_order);
         updates.updateDate = new Date();
 
         if (req.file) {

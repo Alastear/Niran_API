@@ -492,6 +492,33 @@ router.post('/update/brand/:id', upload.single('image'), MasterDataController.Br
  */
 router.get('/delete/brand/:id', MasterDataController.Brand_Api.delete_brand)
 
+/**
+ * @swagger
+ * /api/admin/brand/reorder:
+ *   post:
+ *     summary: จัดลำดับยี่ห้อรถใหม่ทั้งชุด
+ *     tags: [Admin - Brands]
+ *     security:
+ *       - AccessToken: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [ids]
+ *             properties:
+ *               ids:
+ *                 type: array
+ *                 items: { type: integer }
+ *                 description: รายการ id ของยี่ห้อ เรียงตามลำดับที่ต้องการ
+ *                 example: [24, 13, 3]
+ *     responses:
+ *       200:
+ *         description: จัดลำดับสำเร็จ
+ */
+router.post('/brand/reorder', MasterDataController.Brand_Api.reorder_brand)
+
 // ──────────────────────────────────────────────
 // Car Detail
 // ──────────────────────────────────────────────

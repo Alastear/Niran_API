@@ -1,4 +1,4 @@
-const { pgTable, serial, text, jsonb, timestamp } = require('drizzle-orm/pg-core');
+const { pgTable, serial, text, jsonb, timestamp, integer } = require('drizzle-orm/pg-core');
 
 // NOTE: The primary key column is `id` in Postgres but exposed as `_id` in the
 // JS object so API responses keep the same shape the frontend expects (Mongo `_id`).
@@ -19,6 +19,7 @@ const masterBrand = pgTable('master_brand', {
   brand_name: text('brand_name').notNull(),
   brand_description: text('brand_description'),
   brand_image: text('brand_image'),
+  sort_order: integer('sort_order').default(0),
   updateDate: timestamp('update_date').notNull(),
 });
 
