@@ -83,4 +83,15 @@ const contactInfo = pgTable('contact_info', {
   updateDate: timestamp('update_date').notNull(),
 });
 
-module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo };
+// เอกสารแนบต่อรถ (เก็บไฟล์ใน Vercel Blob แบบ private)
+const documents = pgTable('documents', {
+  _id: serial('id').primaryKey(),
+  car_id: integer('car_id').notNull(),
+  doc_type: text('doc_type').notNull(),   // tax | insurance | contract | receipt | other
+  file_name: text('file_name'),           // ชื่อไฟล์ต้นฉบับ
+  blob_url: text('blob_url').notNull(),    // private blob url
+  uploaded_by: integer('uploaded_by'),
+  createDate: timestamp('create_date').notNull(),
+});
+
+module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo, documents };

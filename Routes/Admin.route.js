@@ -8,6 +8,7 @@ const CarStoreController = require('../Controllers/CarStore.Controller');
 const MasterDataController = require('../Controllers/MasterData.Controller');
 const UserController = require('../Controllers/User.Controller');
 const RoleController = require('../Controllers/Role.Controller');
+const DocumentController = require('../Controllers/Document.Controller');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage })
 
@@ -862,6 +863,83 @@ router.post('/update/user/:id', authAdmin, UserController.update_user);
  *         description: ไม่พบผู้ใช้
  */
 router.get('/delete/user/:id', authAdmin, UserController.delete_user)
+
+// ──────────────────────────────────────────────
+// Documents (แนบไฟล์ต่อรถ — private Blob)
+// ──────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/documents/{carId}:
+ *   get:
+ *     summary: รายการเอกสารของรถ (ซ่อนเอกสารการเงินถ้าไม่มีสิทธิ์)
+ *     tags: [Admin - Documents]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: carId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: รายการเอกสาร }
+ */
+router.get('/documents/:carId', requirePermission('documents.view'), DocumentController.list_documents);
+
+/**
+ * @swagger
+ * /api/admin/documents/{carId}:
+ *   post:
+ *     summary: อัปโหลดเอกสารแนบรถ
+ *     tags: [Admin - Documents]
+ *     security: [{ AccessToken: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file, doc_type]
+ *             properties:
+ *               file: { type: string, format: binary }
+ *               doc_type: { type: string, enum: [tax, insurance, contract, receipt, other] }
+ *     responses:
+ *       200: { description: อัปโหลดสำเร็จ }
+ */
+router.post('/documents/:carId', requirePermission('documents.manage'), upload.single('file'), DocumentController.upload_document);
+
+/**
+ * @swagger
+ * /api/admin/document/download/{id}:
+ *   get:
+ *     summary: ดาวน์โหลด/ดูไฟล์เอกสาร (stream ผ่าน BE + เช็คสิทธิ์)
+ *     tags: [Admin - Documents]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: ไฟล์ }
+ */
+router.get('/document/download/:id', requirePermission('documents.view'), DocumentController.download_document);
+
+/**
+ * @swagger
+ * /api/admin/delete/document/{id}:
+ *   get:
+ *     summary: ลบเอกสาร
+ *     tags: [Admin - Documents]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: ลบสำเร็จ }
+ */
+router.get('/delete/document/:id', requirePermission('documents.manage'), DocumentController.delete_document);
 
 // ──────────────────────────────────────────────
 // Contact / site settings (เต๊นท์รถ)
