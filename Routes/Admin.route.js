@@ -9,6 +9,7 @@ const MasterDataController = require('../Controllers/MasterData.Controller');
 const UserController = require('../Controllers/User.Controller');
 const RoleController = require('../Controllers/Role.Controller');
 const DocumentController = require('../Controllers/Document.Controller');
+const CustomerController = require('../Controllers/Customer.Controller');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage })
 
@@ -940,6 +941,99 @@ router.get('/document/download/:id', requirePermission('documents.view'), Docume
  *       200: { description: ลบสำเร็จ }
  */
 router.get('/delete/document/:id', requirePermission('documents.manage'), DocumentController.delete_document);
+
+// ──────────────────────────────────────────────
+// CRM: ลูกค้า + แจ้งเตือน (Alert Center)
+// ──────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/customers:
+ *   get:
+ *     summary: รายการลูกค้าทั้งหมด
+ *     tags: [Admin - CRM]
+ *     security: [{ AccessToken: [] }]
+ *     responses:
+ *       200: { description: รายการลูกค้า }
+ */
+router.get('/customers', requirePermission('customers.manage'), CustomerController.Customer_Api.get_all_customer);
+
+/**
+ * @swagger
+ * /api/admin/create/customer:
+ *   post:
+ *     summary: เพิ่มลูกค้า
+ *     tags: [Admin - CRM]
+ *     security: [{ AccessToken: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string }
+ *               tel: { type: string }
+ *               email: { type: string }
+ *               note: { type: string }
+ *               car_id: { type: integer }
+ *               insurance_expiry: { type: string, format: date }
+ *               next_service_date: { type: string, format: date }
+ *     responses:
+ *       200: { description: เพิ่มสำเร็จ }
+ */
+router.post('/create/customer', requirePermission('customers.manage'), CustomerController.Customer_Api.create_customer);
+
+/**
+ * @swagger
+ * /api/admin/update/customer/{id}:
+ *   post:
+ *     summary: แก้ไขลูกค้า
+ *     tags: [Admin - CRM]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: แก้ไขสำเร็จ }
+ */
+router.post('/update/customer/:id', requirePermission('customers.manage'), CustomerController.Customer_Api.update_customer);
+
+/**
+ * @swagger
+ * /api/admin/delete/customer/{id}:
+ *   get:
+ *     summary: ลบลูกค้า
+ *     tags: [Admin - CRM]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: ลบสำเร็จ }
+ */
+router.get('/delete/customer/:id', requirePermission('customers.manage'), CustomerController.Customer_Api.delete_customer);
+
+/**
+ * @swagger
+ * /api/admin/alerts:
+ *   get:
+ *     summary: แจ้งเตือนสิ่งที่ใกล้ครบกำหนด (ภาษี/ประกัน/เช็คระยะ)
+ *     tags: [Admin - CRM]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema: { type: integer, example: 30 }
+ *     responses:
+ *       200: { description: "{ count, alerts[] }" }
+ */
+router.get('/alerts', requirePermission('alerts.view'), CustomerController.get_alerts);
 
 // ──────────────────────────────────────────────
 // Contact / site settings (เต๊นท์รถ)

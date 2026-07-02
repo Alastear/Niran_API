@@ -94,4 +94,18 @@ const documents = pgTable('documents', {
   createDate: timestamp('create_date').notNull(),
 });
 
-module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo, documents };
+// CRM: ข้อมูลลูกค้า + วันครบกำหนดไว้แจ้งเตือน (in-app alert)
+const customers = pgTable('customers', {
+  _id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  tel: text('tel'),
+  email: text('email'),
+  note: text('note'),
+  car_id: integer('car_id'),                       // รถที่ซื้อ/เกี่ยวข้อง (ถ้ามี)
+  insurance_expiry: timestamp('insurance_expiry'), // ประกันหมดอายุ
+  next_service_date: timestamp('next_service_date'), // นัดเช็คระยะครั้งถัดไป
+  createDate: timestamp('create_date').notNull(),
+  updateDate: timestamp('update_date').notNull(),
+});
+
+module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo, documents, customers };
