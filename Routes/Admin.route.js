@@ -10,6 +10,7 @@ const UserController = require('../Controllers/User.Controller');
 const RoleController = require('../Controllers/Role.Controller');
 const DocumentController = require('../Controllers/Document.Controller');
 const CustomerController = require('../Controllers/Customer.Controller');
+const ReportController = require('../Controllers/Report.Controller');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage })
 
@@ -1034,6 +1035,18 @@ router.get('/delete/customer/:id', requirePermission('customers.manage'), Custom
  *       200: { description: "{ count, alerts[] }" }
  */
 router.get('/alerts', requirePermission('alerts.view'), CustomerController.get_alerts);
+
+/**
+ * @swagger
+ * /api/admin/reports/summary:
+ *   get:
+ *     summary: สรุปภาพรวมธุรกิจ (สต๊อก/ยอดขาย/กำไร/รถค้าง/ภาษีใกล้ครบ)
+ *     tags: [Admin - Reports]
+ *     security: [{ AccessToken: [] }]
+ *     responses:
+ *       200: { description: สรุปตัวเลข }
+ */
+router.get('/reports/summary', requirePermission('reports.view'), ReportController.get_summary);
 
 // ──────────────────────────────────────────────
 // Contact / site settings (เต๊นท์รถ)
