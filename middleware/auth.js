@@ -19,6 +19,19 @@ const verifyToken = async (req, res, next) => {
             return res.status(401).send("Invalid User");
         }
 
+        // แนบสิทธิ์ (permissions) จาก role ของ user ให้ req.user
+        let permissions = [];
+        if (result.role_id) {
+            const [role] = await db.select().from(schema.roles).where(eq(schema.roles._id, result.role_id));
+            if (role && Array.isArray(role.permissions)) permissions = role.permissions;
+        }
+        // เผื่อ user เก่าที่ยังไม่มี role: ถ้าเป็น ADMIN ให้สิทธิ์เต็ม
+        if (!permissions.length && result.position === 'ADMIN') {
+            permissions = require('../config/permissions').ALL_PERMISSIONS;
+        }
+        req.user.permissions = permissions;
+        req.user.role_id = result.role_id;
+
     } catch (err) {
         return res.status(401).send("Invalid Token");
     }

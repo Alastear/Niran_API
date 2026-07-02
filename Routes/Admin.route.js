@@ -3,9 +3,11 @@ const router = express.Router();
 const multer = require("multer")
 
 const authAdmin = require("../middleware/authAdmin");
+const requirePermission = require("../middleware/requirePermission");
 const CarStoreController = require('../Controllers/CarStore.Controller');
 const MasterDataController = require('../Controllers/MasterData.Controller');
 const UserController = require('../Controllers/User.Controller');
+const RoleController = require('../Controllers/Role.Controller');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage })
 
@@ -518,6 +520,93 @@ router.get('/delete/brand/:id', MasterDataController.Brand_Api.delete_brand)
  *         description: จัดลำดับสำเร็จ
  */
 router.post('/brand/reorder', MasterDataController.Brand_Api.reorder_brand)
+
+// ──────────────────────────────────────────────
+// Roles & Permissions (RBAC) — ต้องมีสิทธิ์ users.manage
+// ──────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /api/admin/permissions:
+ *   get:
+ *     summary: รายการสิทธิ์ทั้งหมด (permission catalog) สำหรับเรนเดอร์ checkbox
+ *     tags: [Admin - Roles]
+ *     security: [{ AccessToken: [] }]
+ *     responses:
+ *       200: { description: กลุ่มสิทธิ์ }
+ */
+router.get('/permissions', RoleController.get_permission_catalog);
+
+/**
+ * @swagger
+ * /api/admin/roles:
+ *   get:
+ *     summary: รายการ role ทั้งหมด
+ *     tags: [Admin - Roles]
+ *     security: [{ AccessToken: [] }]
+ *     responses:
+ *       200: { description: รายการ role }
+ */
+router.get('/roles', RoleController.get_all_roles);
+
+/**
+ * @swagger
+ * /api/admin/create/role:
+ *   post:
+ *     summary: สร้าง role ใหม่
+ *     tags: [Admin - Roles]
+ *     security: [{ AccessToken: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name: { type: string, example: หัวหน้าฝ่ายขาย }
+ *               permissions:
+ *                 type: array
+ *                 items: { type: string }
+ *                 example: ["cars.view", "cars.edit", "customers.manage"]
+ *     responses:
+ *       200: { description: สร้างสำเร็จ }
+ */
+router.post('/create/role', requirePermission('users.manage'), RoleController.create_role);
+
+/**
+ * @swagger
+ * /api/admin/update/role/{id}:
+ *   post:
+ *     summary: แก้ไข role (ชื่อ/สิทธิ์)
+ *     tags: [Admin - Roles]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer, example: 1 }
+ *     responses:
+ *       200: { description: แก้ไขสำเร็จ }
+ */
+router.post('/update/role/:id', requirePermission('users.manage'), RoleController.update_role);
+
+/**
+ * @swagger
+ * /api/admin/delete/role/{id}:
+ *   get:
+ *     summary: ลบ role (ลบ role ระบบ/ที่มีผู้ใช้อยู่ไม่ได้)
+ *     tags: [Admin - Roles]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer, example: 2 }
+ *     responses:
+ *       200: { description: ลบสำเร็จ }
+ */
+router.get('/delete/role/:id', requirePermission('users.manage'), RoleController.delete_role);
 
 // ──────────────────────────────────────────────
 // Car Detail

@@ -6,6 +6,16 @@ const { db, schema } = require('../database/db');
 
 const users = schema.users;
 
+// รวมสิทธิ์จาก role ของ user (fallback: ADMIN เก่าที่ยังไม่มี role → สิทธิ์เต็ม)
+async function getPermissions(user) {
+  if (user.role_id) {
+    const [role] = await db.select().from(schema.roles).where(eq(schema.roles._id, user.role_id));
+    if (role && Array.isArray(role.permissions)) return role.permissions;
+  }
+  if (user.position === 'ADMIN') return require('../config/permissions').ALL_PERMISSIONS;
+  return [];
+}
+
 module.exports = {
 
   user_register: async (req, res, next) => {
@@ -19,6 +29,7 @@ module.exports = {
           username: body.username,
           password: encryptedPassword,
           position: body.position,
+          role_id: body.role_id !== undefined ? Number(body.role_id) : null,
           createDate: date,
           updateDate: date,
         }).returning();
@@ -44,6 +55,7 @@ module.exports = {
         email: users.email,
         tel: users.tel,
         position: users.position,
+        role_id: users.role_id,
         createDate: users.createDate,
         updateDate: users.updateDate,
       }).from(users);
@@ -71,6 +83,8 @@ module.exports = {
           process.env.REFRESH_TOKEN_KEY,
           { expiresIn: "30d" }
         );
+        // แนบสิทธิ์จาก role ให้ FE ใช้ gate เมนู/ปุ่ม
+        result.permissions = await getPermissions(result);
         result.access_token = access_token;
         result.refresh_token = refresh_token;
         res.send({ result, access_token, refresh_token });
@@ -103,6 +117,7 @@ module.exports = {
           process.env.REFRESH_TOKEN_KEY,
           { expiresIn: "30d" }
         );
+        result.permissions = await getPermissions(result);
         result.access_token = access_token;
         result.refresh_token = refresh_token;
         res.send({ result, access_token, refresh_token });
@@ -125,6 +140,7 @@ module.exports = {
       for (const k of ['username', 'email', 'tel', 'position']) {
         if (body[k] !== undefined) updates[k] = body[k];
       }
+      if (body.role_id !== undefined) updates.role_id = body.role_id === null ? null : Number(body.role_id);
       if (body.password) {
         updates.password = await bcrypt.hash(body.password, 10);
       }

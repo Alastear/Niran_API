@@ -1,4 +1,4 @@
-const { pgTable, serial, text, jsonb, timestamp, integer } = require('drizzle-orm/pg-core');
+const { pgTable, serial, text, jsonb, timestamp, integer, boolean } = require('drizzle-orm/pg-core');
 
 // NOTE: The primary key column is `id` in Postgres but exposed as `_id` in the
 // JS object so API responses keep the same shape the frontend expects (Mongo `_id`).
@@ -10,7 +10,17 @@ const users = pgTable('users', {
   email: text('email'),
   tel: text('tel'),
   position: text('position').notNull(),
+  role_id: integer('role_id'),
   createDate: timestamp('create_date').notNull(),
+  updateDate: timestamp('update_date').notNull(),
+});
+
+// Dynamic RBAC: roles ที่สร้าง/แก้เองได้ + รายการสิทธิ์ (permission keys) เก็บเป็น jsonb
+const roles = pgTable('roles', {
+  _id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  permissions: jsonb('permissions').notNull(),
+  is_system: boolean('is_system').default(false),
   updateDate: timestamp('update_date').notNull(),
 });
 
@@ -67,4 +77,4 @@ const contactInfo = pgTable('contact_info', {
   updateDate: timestamp('update_date').notNull(),
 });
 
-module.exports = { users, masterBrand, masterModel, carDataDetail, carStore, contactInfo };
+module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo };
