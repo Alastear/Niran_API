@@ -7,7 +7,35 @@ const { db, schema } = require('../database/db');
 
 const carStore = schema.carStore;
 
+// ตัดฟิลด์ภายในออกตามสิทธิ์:
+// - public (ไม่ล็อกอิน): ตัด cost/sale/repair/tax ออกหมด
+// - staff ที่ไม่มีสิทธิ์ cars.cost: ตัดราคาทุน + กำไร (เห็นราคาขาย/ซ่อม/ภาษีได้)
+// - มีสิทธิ์ cars.cost: เห็นครบ + คำนวณกำไร
+function serializeCar(car, req) {
+  const c = { ...car };
+  const loggedIn = !!(req && req.user);
+  const canCost = !!(req && req.user && Array.isArray(req.user.permissions) && req.user.permissions.includes('cars.cost'));
+  if (!loggedIn) {
+    delete c.cost_price; delete c.sale_price; delete c.repair_notes; delete c.tax_status; delete c.tax_expiry;
+  } else if (!canCost) {
+    delete c.cost_price;
+  } else if (c.sale_price != null && c.cost_price != null) {
+    c.profit = c.sale_price - c.cost_price;
+  }
+  return c;
+}
+
+// อ่านฟิลด์ธุรกิจจาก body (multipart → string) แปลงชนิดให้ถูก
+function readBusinessFields(body, updates) {
+  if (body.cost_price !== undefined) updates.cost_price = body.cost_price === '' ? null : Number(body.cost_price);
+  if (body.sale_price !== undefined) updates.sale_price = body.sale_price === '' ? null : Number(body.sale_price);
+  if (body.tax_status !== undefined) updates.tax_status = body.tax_status || null;
+  if (body.tax_expiry !== undefined) updates.tax_expiry = body.tax_expiry ? new Date(body.tax_expiry) : null;
+  if (body.repair_notes !== undefined) updates.repair_notes = body.repair_notes || null;
+}
+
 module.exports = {
+  serializeCar,
 
   create_car_store: async (req, res, next) => {
     try {
@@ -36,9 +64,10 @@ module.exports = {
         updateDate: date,
         createDate: date,
       };
+      readBusinessFields(body, values);
 
       const [result] = await db.insert(carStore).values(values).returning();
-      res.send(result);
+      res.send(serializeCar(result, req));
     } catch (error) {
       console.log(error.message);
       if (error.code === '23502') {
@@ -65,7 +94,7 @@ module.exports = {
       }
 
       const results = await q;
-      res.send(results);
+      res.send(results.map((r) => serializeCar(r, req)));
     } catch (error) {
       console.log(error.message);
       next(error);
@@ -77,7 +106,7 @@ module.exports = {
       const id = Number(req.params.id);
       if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
       const [result] = await db.select().from(carStore).where(eq(carStore._id, id));
-      res.send(result ?? null);
+      res.send(result ? serializeCar(result, req) : null);
     } catch (error) {
       console.log(error.message);
       next(error);
@@ -100,6 +129,7 @@ module.exports = {
       for (const k of ['bookingDate', 'soldDate', 'createDate']) {
         if (body[k] !== undefined) updates[k] = body[k] ? new Date(body[k]) : null;
       }
+      readBusinessFields(body, updates);
       updates.updateDate = new Date();
 
       if (req.file) {
@@ -121,7 +151,7 @@ module.exports = {
 
       const [result] = await db.update(carStore).set(updates).where(eq(carStore._id, id)).returning();
       if (!result) throw createError(404, 'Product does not exist');
-      res.send(result);
+      res.send(serializeCar(result, req));
     } catch (error) {
       console.log(error.message);
       next(error);

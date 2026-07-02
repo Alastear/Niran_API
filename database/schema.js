@@ -63,6 +63,12 @@ const carStore = pgTable('car_store', {
   cars_description: text('cars_description'),
   cars_status: text('cars_status').notNull(),
   cars_tag: text('cars_tag'),
+  // ── ข้อมูลธุรกิจ (ภายใน) ──
+  cost_price: integer('cost_price'),      // ราคาทุน (ลับ — เฉพาะสิทธิ์ cars.cost)
+  sale_price: integer('sale_price'),      // ราคาขาย (ใช้คำนวณกำไร/รายงาน)
+  tax_status: text('tax_status'),         // สถานะภาษี เช่น active/expired/none
+  tax_expiry: timestamp('tax_expiry'),    // วันสิ้นอายุภาษี
+  repair_notes: text('repair_notes'),     // โน้ตการซ่อมเชิงลึก (ภายใน)
   updateDate: timestamp('update_date').notNull(),
   createDate: timestamp('create_date'),
   bookingDate: timestamp('booking_date'),
