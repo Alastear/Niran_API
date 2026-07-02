@@ -27,8 +27,10 @@ module.exports = {
           stockCount++;
           if (c.cost_price != null) stockCost += c.cost_price;
           if (c.sale_price != null) stockSale += c.sale_price;
-          if (c.createDate) {
-            const days = Math.floor((now.getTime() - new Date(c.createDate).getTime()) / 86400000);
+          // นับอายุสต๊อกจากวันที่รถเข้า (ถ้า admin กรอก) ไม่งั้นใช้วันที่สร้าง
+          const since = c.import_date || c.createDate;
+          if (since) {
+            const days = Math.floor((now.getTime() - new Date(since).getTime()) / 86400000);
             if (days >= 90) aging.push({ _id: c._id, title: c.cars_title, days });
           }
         } else {

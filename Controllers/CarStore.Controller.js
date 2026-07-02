@@ -27,6 +27,7 @@ function serializeCar(car, req) {
 
 // อ่านฟิลด์ธุรกิจจาก body (multipart → string) แปลงชนิดให้ถูก
 function readBusinessFields(body, updates) {
+  if (body.import_date !== undefined) updates.import_date = body.import_date ? new Date(body.import_date) : null;
   if (body.cost_price !== undefined) updates.cost_price = body.cost_price === '' ? null : Number(body.cost_price);
   if (body.sale_price !== undefined) updates.sale_price = body.sale_price === '' ? null : Number(body.sale_price);
   if (body.tax_status !== undefined) updates.tax_status = body.tax_status || null;
