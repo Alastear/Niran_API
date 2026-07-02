@@ -281,6 +281,23 @@ router.get('/delete/cars/:id', authAdmin, CarStoreController.delete_car_store);
  */
 router.get('/cars/all', CarStoreController.get_all_car_store);
 
+/**
+ * @swagger
+ * /api/admin/cars/{id}:
+ *   get:
+ *     summary: ดูรถตาม id (แบบ admin — เห็นราคาทุน/กำไร/โน้ตซ่อม ตามสิทธิ์)
+ *     tags: [Admin - Cars]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer, example: 1 }
+ *     responses:
+ *       200: { description: ข้อมูลรถ (รวมข้อมูลภายในตามสิทธิ์) }
+ */
+router.get('/cars/:id', CarStoreController.get_car_by_id);
+
 // ──────────────────────────────────────────────
 // Models
 // ──────────────────────────────────────────────
