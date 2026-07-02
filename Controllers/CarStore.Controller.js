@@ -226,11 +226,17 @@ module.exports = {
       if (Array.isArray(result.cars_image) && result.cars_image.length > 0) {
         urlsToDelete.push(...result.cars_image);
       }
+
+      // ลบเอกสารที่ผูกกับรถคันนี้ตามไปด้วย (row + ไฟล์ใน Blob)
+      const docs = await db.select().from(schema.documents).where(eq(schema.documents.car_id, id));
+      for (const d of docs) if (d.blob_url) urlsToDelete.push(d.blob_url);
+      if (docs.length > 0) await db.delete(schema.documents).where(eq(schema.documents.car_id, id));
+
       if (urlsToDelete.length > 0) {
         await del(urlsToDelete);
       }
 
-      res.send(result);
+      res.send(serializeCar(result, req));
     } catch (error) {
       console.log(error.message);
       next(error);

@@ -126,6 +126,10 @@ module.exports = {
         if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
         const [result] = await db.delete(Model).where(eq(Model._id, id)).returning();
         if (!result) throw createError(404, 'Product does not exist.');
+        // ลบรูปรุ่น (ถ้ามี) จาก Blob ตามไปด้วย
+        if (Array.isArray(result.model_image) && result.model_image.length > 0) {
+          try { await del(result.model_image); } catch (e) { console.log('model_image del:', e.message); }
+        }
         res.send(result);
       } catch (error) {
         console.log(error.message);
