@@ -11,6 +11,7 @@ const RoleController = require('../Controllers/Role.Controller');
 const DocumentController = require('../Controllers/Document.Controller');
 const CustomerController = require('../Controllers/Customer.Controller');
 const ReportController = require('../Controllers/Report.Controller');
+const SalesController = require('../Controllers/Sales.Controller');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage })
 
@@ -1047,6 +1048,17 @@ router.get('/alerts', requirePermission('alerts.view'), CustomerController.get_a
  *       200: { description: สรุปตัวเลข }
  */
 router.get('/reports/summary', requirePermission('reports.view'), ReportController.get_summary);
+
+// ──────────────────────────────────────────────
+// Sales (บันทึกการขาย) + Expenses (ค่าใช้จ่ายต่อคัน) — สิทธิ์การเงิน cars.cost
+// ──────────────────────────────────────────────
+router.get('/sales', requirePermission('cars.cost'), SalesController.Sales_Api.list_sales);
+router.post('/create/sale', requirePermission('cars.cost'), SalesController.Sales_Api.create_sale);
+router.get('/delete/sale/:id', requirePermission('cars.cost'), SalesController.Sales_Api.delete_sale);
+
+router.get('/expenses/:carId', requirePermission('cars.cost'), SalesController.Expense_Api.list_expenses);
+router.post('/expenses/:carId', requirePermission('cars.cost'), SalesController.Expense_Api.create_expense);
+router.get('/delete/expense/:id', requirePermission('cars.cost'), SalesController.Expense_Api.delete_expense);
 
 // ──────────────────────────────────────────────
 // Contact / site settings (เต๊นท์รถ)

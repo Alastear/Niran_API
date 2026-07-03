@@ -8,7 +8,7 @@ const toDate = (v) => (v ? new Date(v) : null);
 
 function buildValues(body) {
   const v = {};
-  for (const k of ['name', 'tel', 'email', 'note']) if (body[k] !== undefined) v[k] = body[k];
+  for (const k of ['name', 'tel', 'email', 'note', 'status', 'source']) if (body[k] !== undefined) v[k] = body[k];
   if (body.car_id !== undefined) v.car_id = body.car_id === '' || body.car_id === null ? null : Number(body.car_id);
   if (body.insurance_expiry !== undefined) v.insurance_expiry = toDate(body.insurance_expiry);
   if (body.next_service_date !== undefined) v.next_service_date = toDate(body.next_service_date);
@@ -64,6 +64,33 @@ module.exports = {
         next(error);
       }
     },
+  },
+
+  // Public: ฟอร์มสนใจรถจากหน้าเว็บ → สร้าง lead ใน CRM (ไม่ต้อง login)
+  create_inquiry: async (req, res, next) => {
+    try {
+      const b = req.body || {};
+      if (!b.name && !b.tel) return next(createError(422, 'ต้องมีชื่อหรือเบอร์โทร'));
+      const date = new Date();
+      const noteParts = [];
+      if (b.car_title) noteParts.push(`สนใจรถ: ${b.car_title}`);
+      if (b.message) noteParts.push(b.message);
+      const [row] = await db.insert(Customers).values({
+        name: b.name || '(ไม่ระบุชื่อ)',
+        tel: b.tel || null,
+        email: b.email || null,
+        note: noteParts.join(' | ') || null,
+        car_id: b.car_id ? Number(b.car_id) : null,
+        status: 'interested',
+        source: 'website',
+        createDate: date,
+        updateDate: date,
+      }).returning();
+      res.send({ status: 'success', _id: row._id });
+    } catch (error) {
+      console.log(error.message);
+      next(error);
+    }
   },
 
   // Alert Center: รวมสิ่งที่ใกล้ครบกำหนด (ภาษีรถ / ประกัน / เช็คระยะ) ภายใน N วัน (รวมที่เลยกำหนดแล้ว)

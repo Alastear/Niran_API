@@ -105,8 +105,35 @@ const customers = pgTable('customers', {
   car_id: integer('car_id'),                       // รถที่ซื้อ/เกี่ยวข้อง (ถ้ามี)
   insurance_expiry: timestamp('insurance_expiry'), // ประกันหมดอายุ
   next_service_date: timestamp('next_service_date'), // นัดเช็คระยะครั้งถัดไป
+  status: text('status'),                          // lead: interested | negotiating | closed (ว่าง = ลูกค้าทั่วไป)
+  source: text('source'),                          // ที่มา เช่น website | walkin | manual
   createDate: timestamp('create_date').notNull(),
   updateDate: timestamp('update_date').notNull(),
 });
 
-module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo, documents, customers };
+// บันทึกการขาย (ผูกลูกค้า + รถ)
+const sales = pgTable('sales', {
+  _id: serial('id').primaryKey(),
+  car_id: integer('car_id').notNull(),
+  customer_id: integer('customer_id'),
+  sale_date: timestamp('sale_date').notNull(),
+  sale_price: integer('sale_price'),
+  down_payment: integer('down_payment'),
+  finance_amount: integer('finance_amount'),
+  note: text('note'),
+  created_by: integer('created_by'),
+  createDate: timestamp('create_date').notNull(),
+});
+
+// ค่าใช้จ่าย/ต้นทุนซ่อมต่อคัน (รายการ)
+const expenses = pgTable('expenses', {
+  _id: serial('id').primaryKey(),
+  car_id: integer('car_id').notNull(),
+  title: text('title').notNull(),
+  amount: integer('amount').notNull(),
+  expense_date: timestamp('expense_date'),
+  note: text('note'),
+  createDate: timestamp('create_date').notNull(),
+});
+
+module.exports = { users, roles, masterBrand, masterModel, carDataDetail, carStore, contactInfo, documents, customers, sales, expenses };
