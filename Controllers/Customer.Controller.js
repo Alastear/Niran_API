@@ -121,8 +121,26 @@ module.exports = {
         }
       }
 
+      // lead ใหม่จากเว็บไซต์ที่ยังไม่ได้ติดตาม → ขึ้นก่อนเสมอ
+      const leadAlerts = [];
+      for (const cu of custs) {
+        if (cu.source === 'website' && cu.status === 'interested') {
+          const daysAgo = Math.floor((now.getTime() - new Date(cu.createDate).getTime()) / 86400000);
+          leadAlerts.push({
+            type: 'lead',
+            title: `ลูกค้าใหม่จากเว็บ: ${cu.name}`,
+            date: cu.createDate,
+            daysLeft: 0,
+            daysAgo,
+            ref: { customer_id: cu._id },
+          });
+        }
+      }
+      leadAlerts.sort((a, b) => a.daysAgo - b.daysAgo);
+
       alerts.sort((a, b) => a.daysLeft - b.daysLeft);
-      res.send({ count: alerts.length, alerts });
+      const all = [...leadAlerts, ...alerts];
+      res.send({ count: all.length, alerts: all });
     } catch (error) {
       console.log(error.message);
       next(error);
