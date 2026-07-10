@@ -58,6 +58,7 @@ const carStore = pgTable('car_store', {
   model_name: text('model_name').notNull(),
   cars_image_default: text('cars_image_default'),
   cars_image: jsonb('cars_image'),
+  cars_video: jsonb('cars_video'),   // [{ url, name, size, uploadedAt }] — อัปโหลดตรงจาก browser เข้า Blob
   cars_detail: jsonb('cars_detail').notNull(),
   cars_subdetail: jsonb('cars_subdetail'),
   cars_description: text('cars_description'),

@@ -57,6 +57,7 @@ module.exports = {
         model_name: body.model_name,
         cars_image_default: blob.url,
         cars_image: [],
+        cars_video: [],
         cars_detail: body.cars_detail ? JSON.parse(body.cars_detail) : {},
         cars_subdetail: body.cars_subdetail ? JSON.parse(body.cars_subdetail) : [],
         cars_description: body.cars_description,
@@ -226,6 +227,9 @@ module.exports = {
       if (result.cars_image_default) urlsToDelete.push(result.cars_image_default);
       if (Array.isArray(result.cars_image) && result.cars_image.length > 0) {
         urlsToDelete.push(...result.cars_image);
+      }
+      if (Array.isArray(result.cars_video) && result.cars_video.length > 0) {
+        urlsToDelete.push(...result.cars_video.map((v) => v.url).filter(Boolean));
       }
 
       // ลบเอกสารที่ผูกกับรถคันนี้ตามไปด้วย (row + ไฟล์ใน Blob)

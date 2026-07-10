@@ -69,6 +69,23 @@ Path format inside Blob store: `Category/Default/{random}.{ext}` for default ima
 
 The upload logic lives in [Controllers/CarStore.Controller.js](Controllers/CarStore.Controller.js) and [Controllers/MasterData.Controller.js](Controllers/MasterData.Controller.js).
 
+## Video Upload Flow (different from images)
+
+Vercel Functions cap request bodies at ~4.5MB, so videos cannot go through the multer→`put()` path used for images. Videos use Vercel Blob **client upload**:
+
+1. Browser calls `upload()` from `@vercel/blob/client` (Dashboard `FormEditVideo.js`)
+2. It POSTs to `/api/upload/car-video/token`, which mints a short-lived client token ([Controllers/CarVideo.Controller.js](Controllers/CarVideo.Controller.js))
+3. The file streams **browser → Blob directly**, never passing through this API
+4. The browser then POSTs the resulting URL to `/api/admin/update/cars/video/:id`, persisting it in `car_store.cars_video` — a jsonb array of `{url, name, size, uploadedAt}`
+
+`/api/upload` is mounted **outside** the `auth` middleware in [index.js](index.js) because the Blob client SDK cannot send custom headers. The access token travels inside `clientPayload`; the route verifies it via `resolveUserFromToken()` ([middleware/auth.js](middleware/auth.js)) and requires `cars.edit`.
+
+Blob's `onUploadCompleted` callback is deliberately unused — it only fires against a public URL, so it never runs on localhost. The explicit attach call in step 4 replaces it.
+
+Limits (200MB/file; `video/mp4`, `video/quicktime`, `video/webm`) are enforced server-side in `onBeforeGenerateToken` and mirrored in the Dashboard only for a friendlier error.
+
+Blob path format: `Category/{carId}/video/{name}-{random}.{ext}`. `attach_car_video` rejects any URL not under that car's own video path.
+
 ## Vercel Deployment
 
 Configured for Vercel serverless via [vercel.json](vercel.json). Key patterns:

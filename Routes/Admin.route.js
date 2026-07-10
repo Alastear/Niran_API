@@ -5,6 +5,7 @@ const multer = require("multer")
 const authAdmin = require("../middleware/authAdmin");
 const requirePermission = require("../middleware/requirePermission");
 const CarStoreController = require('../Controllers/CarStore.Controller');
+const CarVideoController = require('../Controllers/CarVideo.Controller');
 const MasterDataController = require('../Controllers/MasterData.Controller');
 const UserController = require('../Controllers/User.Controller');
 const RoleController = require('../Controllers/Role.Controller');
@@ -236,6 +237,82 @@ router.post('/update/cars/image/gallery/:id', upload.array('image', 10), CarStor
  *               $ref: '#/components/schemas/CarStore'
  */
 router.post('/delete/cars/image/gallery/:id', CarStoreController.delete_car_store_image_gallery);
+
+/**
+ * @swagger
+ * /api/admin/update/cars/video/{id}:
+ *   post:
+ *     summary: ผูกวิดีโอที่อัปโหลดแล้วเข้ากับรถ
+ *     description: |
+ *       เรียกหลังจาก browser อัปโหลดไฟล์ตรงเข้า Vercel Blob เสร็จแล้ว
+ *       (ดู `POST /api/upload/car-video/token`) — ตัวไฟล์ไม่ได้ผ่าน API นี้ ส่งมาแค่ URL
+ *     tags: [Admin - Cars]
+ *     security:
+ *       - AccessToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer, example: 1 }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [url]
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 description: full Blob URL ที่ได้จาก upload() (ต้องอยู่ใต้ path Category/{id}/video/)
+ *                 example: https://xxxx.public.blob.vercel-storage.com/Category/1/video/walkaround-abc123.mp4
+ *               name:
+ *                 type: string
+ *                 example: walkaround.mp4
+ *               size:
+ *                 type: integer
+ *                 example: 18452301
+ *     responses:
+ *       200:
+ *         description: ผูกวิดีโอสำเร็จ
+ *       404:
+ *         description: ไม่พบรถที่ระบุ
+ *       422:
+ *         description: url ไม่ถูกต้อง
+ */
+router.post('/update/cars/video/:id', requirePermission('cars.edit'), CarVideoController.attach_car_video);
+
+/**
+ * @swagger
+ * /api/admin/delete/cars/video/{id}:
+ *   post:
+ *     summary: ลบวิดีโอออกจากรถ (ลบไฟล์ใน Blob ด้วย)
+ *     tags: [Admin - Cars]
+ *     security:
+ *       - AccessToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer, example: 1 }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [url]
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 example: https://xxxx.public.blob.vercel-storage.com/Category/1/video/walkaround-abc123.mp4
+ *     responses:
+ *       200:
+ *         description: ลบวิดีโอสำเร็จ
+ *       404:
+ *         description: ไม่พบรถ หรือไม่พบวิดีโอนี้บนรถคันนั้น
+ */
+router.post('/delete/cars/video/:id', requirePermission('cars.edit'), CarVideoController.delete_car_video);
 
 /**
  * @swagger
