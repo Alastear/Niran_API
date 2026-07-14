@@ -187,4 +187,29 @@ router.get('/car/detail', MasterDataController.Car_Detail_Api.get_all_car_detail
  */
 router.get('/contact', MasterDataController.Contact_Api.get_contact);
 
+const CustomerController = require('../Controllers/Customer.Controller');
+/**
+ * @swagger
+ * /api/store/inquiry:
+ *   post:
+ *     summary: ฟอร์มสนใจรถจากหน้าเว็บ (สร้าง lead ใน CRM)
+ *     tags: [Store - Contact]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name: { type: string }
+ *               tel: { type: string }
+ *               email: { type: string }
+ *               message: { type: string }
+ *               car_id: { type: integer }
+ *               car_title: { type: string }
+ *     responses:
+ *       200: { description: บันทึกสำเร็จ }
+ */
+router.post('/inquiry', CustomerController.create_inquiry);
+
 module.exports = router;
