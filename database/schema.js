@@ -127,6 +127,7 @@ const sales = pgTable('sales', {
   payment_type: text('payment_type'),               // cash (ซื้อสด) | bank (จัดไฟแนนซ์/ธนาคาร)
   installment_amount: integer('installment_amount'), // ค่างวดต่อเดือน
   installment_months: integer('installment_months'), // จำนวนงวด (เดือน)
+  advance_installments: integer('advance_installments'), // จำนวนงวดที่หักล่วงหน้า (ตามสัญญา)
   transfer_date: timestamp('transfer_date'),         // วันที่โอนเล่ม
   note: text('note'),
   created_by: integer('created_by'),

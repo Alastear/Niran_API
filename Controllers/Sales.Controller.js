@@ -49,6 +49,7 @@ module.exports = {
           payment_type: b.payment_type || null,
           installment_amount: num(b.installment_amount),
           installment_months: num(b.installment_months),
+          advance_installments: num(b.advance_installments),
           transfer_date: b.transfer_date ? new Date(b.transfer_date) : null,
           note: b.note || null,
           created_by: req.user ? Number(req.user.user_id) : null,
