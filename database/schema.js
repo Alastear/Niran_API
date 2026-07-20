@@ -116,11 +116,18 @@ const customers = pgTable('customers', {
 const sales = pgTable('sales', {
   _id: serial('id').primaryKey(),
   car_id: integer('car_id').notNull(),
-  customer_id: integer('customer_id'),
+  customer_id: integer('customer_id'),              // ผูกลูกค้าเดิมใน CRM (ถ้ามี — ไม่บังคับ)
+  customer_name: text('customer_name'),             // กรอกชื่อลูกค้าตรงนี้ได้เลย (ไม่ต้องมีใน CRM)
+  customer_tel: text('customer_tel'),               // เบอร์ติดต่อลูกค้า
+  customer_address: text('customer_address'),        // ที่อยู่ลูกค้า
   sale_date: timestamp('sale_date').notNull(),
   sale_price: integer('sale_price'),
   down_payment: integer('down_payment'),
   finance_amount: integer('finance_amount'),
+  payment_type: text('payment_type'),               // cash (ซื้อสด) | bank (จัดไฟแนนซ์/ธนาคาร)
+  installment_amount: integer('installment_amount'), // ค่างวดต่อเดือน
+  installment_months: integer('installment_months'), // จำนวนงวด (เดือน)
+  transfer_date: timestamp('transfer_date'),         // วันที่โอนเล่ม
   note: text('note'),
   created_by: integer('created_by'),
   createDate: timestamp('create_date').notNull(),

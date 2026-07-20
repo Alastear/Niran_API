@@ -22,7 +22,8 @@ module.exports = {
         res.send(rows.map((s) => ({
           ...s,
           car_title: carMap[s.car_id] || null,
-          customer_name: s.customer_id ? (cuMap[s.customer_id] || null) : null,
+          // ชื่อที่โชว์: ถ้าผูกลูกค้าเดิมใช้ชื่อจาก CRM ก่อน ไม่งั้นใช้ชื่อที่กรอกในบิลขาย
+          customer_name: (s.customer_id && cuMap[s.customer_id]) || s.customer_name || null,
         })));
       } catch (error) { console.log(error.message); next(error); }
     },
@@ -38,10 +39,17 @@ module.exports = {
         const [sale] = await db.insert(Sales).values({
           car_id: carId,
           customer_id: num(b.customer_id),
+          customer_name: b.customer_name || null,
+          customer_tel: b.customer_tel || null,
+          customer_address: b.customer_address || null,
           sale_date: saleDate,
           sale_price: num(b.sale_price),
           down_payment: num(b.down_payment),
           finance_amount: num(b.finance_amount),
+          payment_type: b.payment_type || null,
+          installment_amount: num(b.installment_amount),
+          installment_months: num(b.installment_months),
+          transfer_date: b.transfer_date ? new Date(b.transfer_date) : null,
           note: b.note || null,
           created_by: req.user ? Number(req.user.user_id) : null,
           createDate: date,
