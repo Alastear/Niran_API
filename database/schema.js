@@ -64,6 +64,7 @@ const carStore = pgTable('car_store', {
   cars_description: text('cars_description'),
   cars_status: text('cars_status').notNull(),
   cars_tag: text('cars_tag'),
+  license_plate: text('license_plate'),   // ทะเบียนรถ (ข้อมูลภายใน ไม่โชว์สาธารณะ)
   import_date: timestamp('import_date'),  // วันที่รถเข้าเต๊นท์ (admin กรอกเอง)
   // ── ข้อมูลธุรกิจ (ภายใน) ──
   cost_price: integer('cost_price'),      // ราคาทุน (ลับ — เฉพาะสิทธิ์ cars.cost)

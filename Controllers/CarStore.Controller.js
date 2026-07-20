@@ -17,6 +17,7 @@ function serializeCar(car, req) {
   const canCost = !!(req && req.user && Array.isArray(req.user.permissions) && req.user.permissions.includes('cars.cost'));
   if (!loggedIn) {
     delete c.cost_price; delete c.sale_price; delete c.repair_notes; delete c.tax_status; delete c.tax_expiry;
+    delete c.license_plate; // ทะเบียนรถเป็นข้อมูลภายใน ไม่โชว์หน้าเว็บสาธารณะ
   } else if (!canCost) {
     delete c.cost_price;
   } else if (c.sale_price != null && c.cost_price != null) {
@@ -33,6 +34,7 @@ function readBusinessFields(body, updates) {
   if (body.tax_status !== undefined) updates.tax_status = body.tax_status || null;
   if (body.tax_expiry !== undefined) updates.tax_expiry = body.tax_expiry ? new Date(body.tax_expiry) : null;
   if (body.repair_notes !== undefined) updates.repair_notes = body.repair_notes || null;
+  if (body.license_plate !== undefined) updates.license_plate = body.license_plate || null;
 }
 
 module.exports = {

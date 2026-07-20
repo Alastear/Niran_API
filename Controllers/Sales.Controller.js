@@ -18,10 +18,12 @@ module.exports = {
         const cars = await db.select().from(Cars);
         const custs = await db.select().from(Customers);
         const carMap = Object.fromEntries(cars.map((c) => [c._id, c.cars_title]));
+        const plateMap = Object.fromEntries(cars.map((c) => [c._id, c.license_plate]));
         const cuMap = Object.fromEntries(custs.map((c) => [c._id, c.name]));
         res.send(rows.map((s) => ({
           ...s,
           car_title: carMap[s.car_id] || null,
+          car_plate: plateMap[s.car_id] || null,
           // ชื่อที่โชว์: ถ้าผูกลูกค้าเดิมใช้ชื่อจาก CRM ก่อน ไม่งั้นใช้ชื่อที่กรอกในบิลขาย
           customer_name: (s.customer_id && cuMap[s.customer_id]) || s.customer_name || null,
         })));
