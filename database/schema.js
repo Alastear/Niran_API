@@ -102,7 +102,16 @@ const customers = pgTable('customers', {
   _id: serial('id').primaryKey(),
   name: text('name').notNull(),
   tel: text('tel'),
+  tel2: text('tel2'),                              // เบอร์สำรอง (สมุดจดมีหลายเบอร์ต่อคน)
   email: text('email'),
+  id_card: text('id_card'),                        // เลขบัตรประชาชน
+  // ที่อยู่แยกส่วนตามสมุดจด: "33 ม.7 ต.นาแวง อ.บ้านดุง จ.อุดรธานี"
+  addr_no: text('addr_no'),                        // บ้านเลขที่
+  addr_moo: text('addr_moo'),                      // หมู่
+  addr_tambon: text('addr_tambon'),                // ตำบล
+  addr_amphoe: text('addr_amphoe'),                // อำเภอ
+  addr_province: text('addr_province'),            // จังหวัด
+  addr_zipcode: text('addr_zipcode'),              // รหัสไปรษณีย์
   note: text('note'),
   car_id: integer('car_id'),                       // รถที่ซื้อ/เกี่ยวข้อง (ถ้ามี)
   insurance_expiry: timestamp('insurance_expiry'), // ประกันหมดอายุ
@@ -129,9 +138,19 @@ const sales = pgTable('sales', {
   installment_amount: integer('installment_amount'), // ค่างวดต่อเดือน
   installment_months: integer('installment_months'), // จำนวนงวด (เดือน)
   advance_installments: integer('advance_installments'), // จำนวนงวดที่หักล่วงหน้า (ตามสัญญา)
+  first_installment_date: timestamp('first_installment_date'), // วันเริ่มผ่อนงวดแรก ("เริ่ม 1/9/69")
+  // ฟิลด์ต่อไปนี้มาจากที่ผู้ใช้จริงเขียนยัดไว้ในช่องหมายเหตุ
+  finance_bank: text('finance_bank'),               // ธนาคาร/ไฟแนนซ์ที่จัด ("จัด TTB", "จัดทิสโก้")
+  contract_no: text('contract_no'),                 // เลขที่สัญญา (สมุดจด: 030-1497)
+  outstanding_down: integer('outstanding_down'),    // ค้างดาวน์/ลูกหนี้ ("ค้างดาวน์ 27,000")
+  insurance_type: text('insurance_type'),           // ป.1 | ป.2 | ป.3 | พรบ | none
+  insurance_cost: integer('insurance_cost'),        // ค่าประกัน ("ป1 22255")
+  trade_in: text('trade_in'),                       // รถตีเทิน ("มีรถตีเทิน ซูซูกิ ciaz")
+  trade_in_value: integer('trade_in_value'),        // มูลค่าที่ตีเทิน
   transfer_date: timestamp('transfer_date'),         // วันที่โอนเล่ม
   note: text('note'),
   created_by: integer('created_by'),
+  updateDate: timestamp('update_date'),              // แก้ไขล่าสุด (รองรับปุ่มแก้ไข)
   createDate: timestamp('create_date').notNull(),
 });
 

@@ -8,7 +8,11 @@ const toDate = (v) => (v ? new Date(v) : null);
 
 function buildValues(body) {
   const v = {};
-  for (const k of ['name', 'tel', 'email', 'note', 'status', 'source']) if (body[k] !== undefined) v[k] = body[k];
+  const TEXT_FIELDS = [
+    'name', 'tel', 'tel2', 'email', 'note', 'status', 'source', 'id_card',
+    'addr_no', 'addr_moo', 'addr_tambon', 'addr_amphoe', 'addr_province', 'addr_zipcode',
+  ];
+  for (const k of TEXT_FIELDS) if (body[k] !== undefined) v[k] = body[k] === '' ? null : body[k];
   if (body.car_id !== undefined) v.car_id = body.car_id === '' || body.car_id === null ? null : Number(body.car_id);
   if (body.insurance_expiry !== undefined) v.insurance_expiry = toDate(body.insurance_expiry);
   if (body.next_service_date !== undefined) v.next_service_date = toDate(body.next_service_date);

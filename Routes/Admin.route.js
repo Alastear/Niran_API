@@ -1130,7 +1130,9 @@ router.get('/reports/summary', requirePermission('reports.view'), ReportControll
 // Sales (บันทึกการขาย) + Expenses (ค่าใช้จ่ายต่อคัน) — สิทธิ์การเงิน cars.cost
 // ──────────────────────────────────────────────
 router.get('/sales', requirePermission('cars.cost'), SalesController.Sales_Api.list_sales);
+router.get('/sale/:id', requirePermission('cars.cost'), SalesController.Sales_Api.get_sale);
 router.post('/create/sale', requirePermission('cars.cost'), SalesController.Sales_Api.create_sale);
+router.post('/update/sale/:id', requirePermission('cars.cost'), SalesController.Sales_Api.update_sale);
 router.get('/delete/sale/:id', requirePermission('cars.cost'), SalesController.Sales_Api.delete_sale);
 
 router.get('/expenses/:carId', requirePermission('cars.cost'), SalesController.Expense_Api.list_expenses);
