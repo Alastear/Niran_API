@@ -35,6 +35,7 @@ function readSaleFields(b, { partial = false } = {}) {
   put('customer_tel', str(b.customer_tel), b.customer_tel !== undefined);
   put('customer_address', composeAddress(b), b.customer_address !== undefined || b.addr_no !== undefined || b.addr_tambon !== undefined || b.addr_amphoe !== undefined || b.addr_province !== undefined || b.addr_moo !== undefined);
   put('sale_price', num(b.sale_price), b.sale_price !== undefined);
+  put('deposit', num(b.deposit), b.deposit !== undefined);
   put('down_payment', num(b.down_payment), b.down_payment !== undefined);
   put('finance_amount', num(b.finance_amount), b.finance_amount !== undefined);
   put('payment_type', str(b.payment_type), b.payment_type !== undefined);

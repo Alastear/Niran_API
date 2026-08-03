@@ -146,6 +146,7 @@ const sales = pgTable('sales', {
   customer_address: text('customer_address'),        // ที่อยู่ลูกค้า
   sale_date: timestamp('sale_date').notNull(),
   sale_price: integer('sale_price'),
+  deposit: integer('deposit'),                      // เงินจอง (จ่ายก่อนวันโอน)
   down_payment: integer('down_payment'),
   finance_amount: integer('finance_amount'),
   payment_type: text('payment_type'),               // cash (ซื้อสด) | bank (จัดไฟแนนซ์/ธนาคาร)
