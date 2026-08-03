@@ -9,6 +9,7 @@ module.exports = {
 
       let stockCount = 0, stockCost = 0, stockSale = 0;
       let soldCount = 0, revenue = 0, profit = 0, reservedCount = 0;
+      let intakeCount = 0, intakeCost = 0;
       const statusBreakdown = {};
       const brandCount = {};
       const aging = [];
@@ -33,6 +34,10 @@ module.exports = {
             const days = Math.floor((now.getTime() - new Date(since).getTime()) / 86400000);
             if (days >= 90) aging.push({ _id: c._id, title: c.cars_title, days });
           }
+        } else if (st === 'INTAKE') {
+          // รับเข้ามาแล้วแต่ยังไม่พร้อมขาย — เป็นเงินจมเหมือนกัน แต่ไม่ใช่สต๊อกที่ขายได้
+          intakeCount++;
+          if (c.cost_price != null) intakeCost += c.cost_price;
         } else {
           // จอง/RESERVE/อื่น ๆ
           reservedCount++;
@@ -59,6 +64,7 @@ module.exports = {
         stock: { count: stockCount, value_cost: stockCost, value_sale: stockSale },
         sold: { count: soldCount, revenue, profit },
         reserved: { count: reservedCount },
+        intake: { count: intakeCount, value_cost: intakeCost },
         status_breakdown: statusBreakdown,
         by_brand,
         aging: aging.slice(0, 10),

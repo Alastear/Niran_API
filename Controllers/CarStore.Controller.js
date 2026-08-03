@@ -2,10 +2,22 @@ const { put, del } = require('@vercel/blob');
 const createError = require('http-errors');
 const crypto = require('crypto');
 const sharp = require('sharp');
-const { eq, desc } = require('drizzle-orm');
+const { eq, desc, notInArray } = require('drizzle-orm');
 const { db, schema } = require('../database/db');
 
 const carStore = schema.carStore;
+
+// สถานะที่ "ไม่" ให้โผล่หน้าเว็บสาธารณะ
+// SOLD  = ขายแล้ว (ลูกค้าไม่ต้องเห็นในรายการขาย)
+// INTAKE = เพิ่งรับเข้ามา ยังไม่พร้อมปล่อยขาย
+const HIDDEN_PUBLIC_STATUS = ['SOLD', 'INTAKE'];
+
+// ฟิลด์ภายในที่ห้ามหลุดออก public API (ข้อมูลรับรถเข้า/เจ้าของเดิม/ต้นทุน)
+const INTERNAL_ONLY_FIELDS = [
+  'license_plate', 'intake_no', 'branch', 'plate_province', 'registration_date', 'act_expiry',
+  'engine_no', 'chassis_no', 'prev_owner_name', 'prev_owner_address', 'prev_owner_id_card',
+  'finance_quotes', 'equipment',
+];
 
 // ตัดฟิลด์ภายในออกตามสิทธิ์:
 // - public (ไม่ล็อกอิน): ตัด cost/sale/repair/tax ออกหมด
@@ -17,7 +29,8 @@ function serializeCar(car, req) {
   const canCost = !!(req && req.user && Array.isArray(req.user.permissions) && req.user.permissions.includes('cars.cost'));
   if (!loggedIn) {
     delete c.cost_price; delete c.sale_price; delete c.repair_notes; delete c.tax_status; delete c.tax_expiry;
-    delete c.license_plate; // ทะเบียนรถเป็นข้อมูลภายใน ไม่โชว์หน้าเว็บสาธารณะ
+    // ข้อมูลภายใน (ทะเบียน/เลขเครื่อง/เจ้าของเดิม/ยอดจัด ฯลฯ) ห้ามหลุดหน้าเว็บสาธารณะ
+    for (const f of INTERNAL_ONLY_FIELDS) delete c[f];
   } else if (!canCost) {
     delete c.cost_price;
   } else if (c.sale_price != null && c.cost_price != null) {
@@ -35,6 +48,14 @@ function readBusinessFields(body, updates) {
   if (body.tax_expiry !== undefined) updates.tax_expiry = body.tax_expiry ? new Date(body.tax_expiry) : null;
   if (body.repair_notes !== undefined) updates.repair_notes = body.repair_notes || null;
   if (body.license_plate !== undefined) updates.license_plate = body.license_plate || null;
+  // ── ข้อมูลรับรถเข้า ──
+  for (const k of ['intake_no', 'branch', 'plate_province', 'engine_no', 'chassis_no',
+    'prev_owner_name', 'prev_owner_address', 'prev_owner_id_card', 'finance_quotes', 'equipment']) {
+    if (body[k] !== undefined) updates[k] = body[k] || null;
+  }
+  for (const k of ['registration_date', 'act_expiry']) {
+    if (body[k] !== undefined) updates[k] = body[k] ? new Date(body[k]) : null;
+  }
 }
 
 module.exports = {
@@ -44,26 +65,35 @@ module.exports = {
     try {
       const body = req.body;
       const date = new Date();
-      const ext = req.file.mimetype.split("/")[1];
-      const randomName = crypto.randomBytes(16).toString('hex');
-      const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
 
-      const blob = await put(`Category/Default/${randomName}.${ext}`, buffer, {
-        access: 'public',
-        contentType: req.file.mimetype,
-      });
+      // รูปไม่บังคับ — รถที่เพิ่งรับเข้า (INTAKE) ยังไม่ได้ถ่ายรูป ค่อยมาใส่ทีหลังได้
+      let imageUrl = null;
+      if (req.file) {
+        const ext = req.file.mimetype.split("/")[1];
+        const randomName = crypto.randomBytes(16).toString('hex');
+        const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
+        const blob = await put(`Category/Default/${randomName}.${ext}`, buffer, {
+          access: 'public',
+          contentType: req.file.mimetype,
+        });
+        imageUrl = blob.url;
+      }
+
+      // รับสถานะจาก body ได้ (หน้า "รับรถเข้า" ส่ง INTAKE มา) ค่าเริ่มต้นคือพร้อมขาย
+      const ALLOWED_STATUS = ['SELL', 'RESERVE', 'SOLD', 'INTAKE'];
+      const status = ALLOWED_STATUS.includes(body.cars_status) ? body.cars_status : 'SELL';
 
       const values = {
         cars_title: body.cars_title,
         brand_name: body.brand_name,
         model_name: body.model_name,
-        cars_image_default: blob.url,
+        cars_image_default: imageUrl,
         cars_image: [],
         cars_video: [],
         cars_detail: body.cars_detail ? JSON.parse(body.cars_detail) : {},
         cars_subdetail: body.cars_subdetail ? JSON.parse(body.cars_subdetail) : [],
         cars_description: body.cars_description,
-        cars_status: 'SELL',
+        cars_status: status,
         cars_tag: body.cars_tag,
         updateDate: date,
         createDate: date,
@@ -86,6 +116,10 @@ module.exports = {
     try {
       const query = req.query;
       let q = db.select().from(carStore).$dynamic();
+
+      // route นี้ใช้ร่วมกันทั้ง /api/store/cars (สาธารณะ) และ /api/admin/cars/all (หลัง auth)
+      // ฝั่งสาธารณะต้องไม่เห็นรถที่ขายแล้วและรถที่ยังไม่พร้อมขาย
+      if (!req.user) q = q.where(notInArray(carStore.cars_status, HIDDEN_PUBLIC_STATUS));
 
       if (query.updateDate) q = q.orderBy(desc(carStore.updateDate));
       else if (query.createDate) q = q.orderBy(desc(carStore.createDate));
@@ -110,7 +144,11 @@ module.exports = {
       const id = Number(req.params.id);
       if (Number.isNaN(id)) return next(createError(400, 'Invalid Product id'));
       const [result] = await db.select().from(carStore).where(eq(carStore._id, id));
-      res.send(result ? serializeCar(result, req) : null);
+      // รถที่ยังไม่พร้อมขายเป็นข้อมูลภายใน — เปิดดูจากหน้าเว็บตรง ๆ ไม่ได้
+      // (รถ SOLD ยังเปิดได้ ลิงก์เก่าที่ลูกค้าเคยแชร์จะไม่พัง แค่ไม่โผล่ในรายการ)
+      // ใช้ res.json เพื่อให้ได้ body "null" ที่ client parse ได้ (res.send(null) ส่ง body ว่าง แล้ว .json() พัง)
+      if (result && !req.user && result.cars_status === 'INTAKE') return res.json(null);
+      res.json(result ? serializeCar(result, req) : null);
     } catch (error) {
       console.log(error.message);
       next(error);

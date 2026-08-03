@@ -62,10 +62,24 @@ const carStore = pgTable('car_store', {
   cars_detail: jsonb('cars_detail').notNull(),
   cars_subdetail: jsonb('cars_subdetail'),
   cars_description: text('cars_description'),
+  // SELL = พร้อมขาย | RESERVE = จอง | SOLD = ขายแล้ว | INTAKE = รับเข้ามาแล้วยังไม่พร้อมขาย (ไม่โชว์หน้าเว็บ)
   cars_status: text('cars_status').notNull(),
   cars_tag: text('cars_tag'),
   license_plate: text('license_plate'),   // ทะเบียนรถ (ข้อมูลภายใน ไม่โชว์สาธารณะ)
   import_date: timestamp('import_date'),  // วันที่รถเข้าเต๊นท์ (admin กรอกเอง)
+  // ── ข้อมูลรับรถเข้า (ตามสมุดจด "รับรถเข้า" + เอกสารสต๊อกสิ้นเดือน) ทั้งหมดเป็นข้อมูลภายใน ──
+  intake_no: text('intake_no'),               // ลำดับคัน เช่น "31/72(69)"
+  branch: text('branch'),                     // สาขาที่จอด: หนองฉาง | บ้านไร่
+  plate_province: text('plate_province'),     // จังหวัดทะเบียน เช่น กำแพงเพชร
+  registration_date: timestamp('registration_date'), // วันจดทะเบียน
+  act_expiry: timestamp('act_expiry'),        // วันหมดอายุ พรบ./บัตร ("บัตรขาด")
+  engine_no: text('engine_no'),               // เลขเครื่อง
+  chassis_no: text('chassis_no'),             // เลขตัวถัง (VIN)
+  prev_owner_name: text('prev_owner_name'),   // ชื่อเจ้าของเดิมในเล่ม
+  prev_owner_address: text('prev_owner_address'), // ที่อยู่เจ้าของเดิม
+  prev_owner_id_card: text('prev_owner_id_card'), // เลขบัตร ปชช. เจ้าของเดิม
+  finance_quotes: text('finance_quotes'),     // ยอดจัดที่ประเมินได้ เช่น "TTB 270,000 / ทิสโก้ 290,000" หรือ "จัดไม่ได้"
+  equipment: text('equipment'),               // อุปกรณ์ติดรถ/ของแถม เช่น "ยางใหม่ 3, กุญแจสำรอง, เบาะ 2"
   // ── ข้อมูลธุรกิจ (ภายใน) ──
   cost_price: integer('cost_price'),      // ราคาทุน (ลับ — เฉพาะสิทธิ์ cars.cost)
   sale_price: integer('sale_price'),      // ราคาขาย (ใช้คำนวณกำไร/รายงาน)
