@@ -1140,6 +1140,47 @@ router.get('/alerts', requirePermission('alerts.view'), CustomerController.get_a
  */
 router.get('/reports/summary', requirePermission('reports.view'), ReportController.get_summary);
 
+/**
+ * @swagger
+ * /api/admin/reports/stock:
+ *   get:
+ *     summary: สต๊อกรายเดือน (ยกมา + ซื้อเข้า - ขายออก = คงเหลือ)
+ *     tags: [Admin - Cars]
+ *     security: [{ AccessToken: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         required: true
+ *         schema: { type: string, example: '2026-07' }
+ *     responses:
+ *       200: { description: สรุปสต๊อก + รายการรถแต่ละกลุ่ม + จุดที่ข้อมูลขาด }
+ */
+router.get('/reports/stock', requirePermission('reports.view'), ReportController.get_stock_month);
+
+/**
+ * @swagger
+ * /api/admin/reports/stock:
+ *   post:
+ *     summary: คีตัวเลขสต๊อกเอง (ทับค่าที่ระบบคำนวณ)
+ *     tags: [Admin - Cars]
+ *     security: [{ AccessToken: [] }]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [month]
+ *             properties:
+ *               month: { type: string, example: '2026-07' }
+ *               opening_override: { type: integer, example: 30 }
+ *               in_override: { type: integer, example: 11 }
+ *               out_override: { type: integer, example: 9 }
+ *               note: { type: string }
+ *     responses:
+ *       200: { description: บันทึกสำเร็จ }
+ */
+router.post('/reports/stock', requirePermission('reports.view'), ReportController.save_stock_month);
+
 // ──────────────────────────────────────────────
 // Sales (บันทึกการขาย) + Expenses (ค่าใช้จ่ายต่อคัน) — สิทธิ์การเงิน cars.cost
 // ──────────────────────────────────────────────
