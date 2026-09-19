@@ -176,10 +176,11 @@ module.exports = {
         const randomName = crypto.randomBytes(16).toString('hex');
         const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1980, fit: "contain" }).toBuffer();
 
-        // ลบรูปเดิม (cars_image_default ที่ frontend ส่งมาเป็น full URL)
-        if (body.cars_image_default) {
-          await r2.remove(body.cars_image_default);
-        }
+        // ลบรูปเดิมโดยอ่าน url จากฐานข้อมูลเอง — ไม่พึ่ง client ส่งกลับมา
+        // (ถ้าหน้าไหนลืมส่ง cars_image_default รูปเก่าจะค้างเป็นไฟล์กำพร้าทันที)
+        const [prev] = await db.select({ old: carStore.cars_image_default })
+          .from(carStore).where(eq(carStore._id, id));
+        if (prev?.old) await r2.remove(prev.old);
 
         const url = await r2.put(`Category/Default/${randomName}.${ext}`, buffer, req.file.mimetype);
         updates.cars_image_default = url;

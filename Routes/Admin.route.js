@@ -13,6 +13,7 @@ const DocumentController = require('../Controllers/Document.Controller');
 const CustomerController = require('../Controllers/Customer.Controller');
 const ReportController = require('../Controllers/Report.Controller');
 const SalesController = require('../Controllers/Sales.Controller');
+const StorageController = require('../Controllers/Storage.Controller');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage })
 
@@ -1227,6 +1228,41 @@ router.get('/delete/sale/:id', requirePermission('cars.cost'), SalesController.S
 router.get('/expenses/:carId', requirePermission('cars.cost'), SalesController.Expense_Api.list_expenses);
 router.post('/expenses/:carId', requirePermission('cars.cost'), SalesController.Expense_Api.create_expense);
 router.get('/delete/expense/:id', requirePermission('cars.cost'), SalesController.Expense_Api.delete_expense);
+
+// ──────────────────────────────────────────────
+// Storage (ที่เก็บไฟล์) — ดูพื้นที่ + กวาดไฟล์กำพร้า
+// ──────────────────────────────────────────────
+/**
+ * @swagger
+ * /api/admin/storage/usage:
+ *   get:
+ *     summary: ดูพื้นที่ที่ใช้ + จำนวนไฟล์กำพร้า
+ *     tags: [Admin - Users]
+ *     security: [{ AccessToken: [] }]
+ *     responses:
+ *       200: { description: สรุปการใช้พื้นที่ }
+ */
+router.get('/storage/usage', requirePermission('settings.manage'), StorageController.get_usage);
+
+/**
+ * @swagger
+ * /api/admin/storage/cleanup:
+ *   post:
+ *     summary: ลบไฟล์ที่ไม่มีใครใช้แล้วออกจากที่เก็บ
+ *     description: เว้นไฟล์ที่เพิ่งอัปโหลดภายใน grace_hours (ค่าเริ่มต้น 24 ชม.) เพื่อไม่ลบไฟล์ที่กำลังอัปอยู่
+ *     tags: [Admin - Users]
+ *     security: [{ AccessToken: [] }]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               grace_hours: { type: integer, example: 24 }
+ *     responses:
+ *       200: { description: ลบเรียบร้อย }
+ */
+router.post('/storage/cleanup', requirePermission('settings.manage'), StorageController.cleanup);
 
 // ──────────────────────────────────────────────
 // Contact / site settings (เต๊นท์รถ)

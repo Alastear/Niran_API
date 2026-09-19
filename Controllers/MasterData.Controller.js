@@ -212,10 +212,11 @@ module.exports = {
         updates.updateDate = new Date();
 
         if (req.file) {
-          // ลบรูปเดิม (brand_image ที่ frontend ส่งมาเป็น full URL)
-          if (body.brand_image) {
-            await r2.remove(body.brand_image);
-          }
+          // ลบโลโก้เดิมโดยอ่านจากฐานข้อมูลเอง — หน้าแก้ไขยี่ห้อไม่ได้ส่ง url เก่ากลับมา
+          // ถ้าพึ่ง client ไฟล์เก่าจะค้างเป็นกำพร้าทุกครั้งที่เปลี่ยนโลโก้
+          const [prev] = await db.select({ old: Brand.brand_image })
+            .from(Brand).where(eq(Brand._id, id));
+          if (prev?.old) await r2.remove(prev.old);
           const randomName = crypto.randomBytes(16).toString('hex');
           const buffer = await sharp(req.file.buffer).toBuffer();
           const url = await r2.put(`Category/Brand/${randomName}`, buffer, req.file.mimetype);

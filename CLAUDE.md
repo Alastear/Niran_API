@@ -71,6 +71,30 @@ Path format inside the bucket: `Category/Default/{random}.{ext}` for default ima
 
 The upload logic lives in [Controllers/CarStore.Controller.js](Controllers/CarStore.Controller.js) and [Controllers/MasterData.Controller.js](Controllers/MasterData.Controller.js).
 
+## Orphaned File Cleanup
+
+Deleting a car/brand/document, replacing an image, or removing a gallery item deletes the
+underlying object straight away. Those hooks read the old URL **from the database**, not from
+whatever the client echoes back, so a page that forgets to send it cannot leak a file.
+
+Some orphans are still unavoidable: a presigned video upload that finishes while the browser
+is closed before the attach call, an upload that succeeds when the DB write fails, or rows
+deleted directly in SQL. [lib/orphans.js](lib/orphans.js) sweeps those up by diffing the bucket
+against every URL the database references.
+
+```bash
+node scripts/cleanup-orphans.js                 # report only
+node scripts/cleanup-orphans.js --apply         # delete, keeping anything < 24h old
+node scripts/cleanup-orphans.js --apply --grace 0
+```
+
+Also exposed as `GET /api/admin/storage/usage` and `POST /api/admin/storage/cleanup`
+(both need `settings.manage`). The grace window matters: an in-flight upload is not yet
+referenced by anything, so sweeping with `grace 0` while someone is uploading would delete
+their file mid-transfer. The sweep also refuses to run if the database reports zero
+referenced URLs while the bucket is not empty — that combination means the query failed,
+and proceeding would wipe every file.
+
 ## Video Upload Flow (different from images)
 
 Vercel Functions cap request bodies at ~4.5MB, so videos cannot go through the multer→`r2.put()` path used for images. Videos are uploaded **straight from the browser** with a presigned URL:
